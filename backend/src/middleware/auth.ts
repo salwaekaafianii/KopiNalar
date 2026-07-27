@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
 export interface AuthRequest extends Request {
-  user?: { id: string; name: string; email: string };
+  user?: { id: string; name: string; email: string; role: string };
 }
 
 export const verifyToken = (
@@ -23,11 +23,24 @@ export const verifyToken = (
       id: string;
       name: string;
       email: string;
+      role: string;
     };
-    req.user = { id: decoded.id, name: decoded.name, email: decoded.email };
+    req.user = { id: decoded.id, name: decoded.name, email: decoded.email, role: decoded.role };
     next();
   } catch (error) {
     return res.status(401).json({ message: "Token tidak valid atau sudah kadaluarsa" });
   }
+};
+
+// Middleware khusus admin
+export const verifyAdmin = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  if (req.user?.role !== "admin") {
+    return res.status(403).json({ message: "Akses ditolak. Hanya untuk admin" });
+  }
+  next();
 };
 

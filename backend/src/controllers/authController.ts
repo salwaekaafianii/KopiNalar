@@ -7,9 +7,9 @@ import { AuthRequest } from "../middleware/auth";
 // ============================================================
 // HELPER: Generate JWT Token
 // ============================================================
-const generateToken = (user: { id: string; name: string; email: string }) => {
+const generateToken = (user: { id: string; name: string; email: string; role: string }) => {
   return jwt.sign(
-    { id: user.id, name: user.name, email: user.email },
+    { id: user.id, name: user.name, email: user.email, role: user.role },
     process.env.JWT_SECRET as string,
     { expiresIn: "7d" }
   );
@@ -51,12 +51,13 @@ export const register = async (req: Request, res: Response) => {
       id: user._id.toString(),
       name: user.name,
       email: user.email,
+      role: user.role,
     });
 
     res.status(201).json({
       message: "Akun berhasil didaftarkan",
       token,
-      user: { id: user._id, name: user.name, email: user.email },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
     });
   } catch (error) {
     console.error("Register error:", error);
@@ -80,7 +81,7 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
     }
 
     res.status(200).json({
-      user: { id: user._id, name: user.name, email: user.email },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
     });
   } catch (error) {
     console.error("Get profile error:", error);
@@ -135,12 +136,13 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       id: updatedUser._id.toString(),
       name: updatedUser.name,
       email: updatedUser.email,
+      role: updatedUser.role,
     });
 
     res.status(200).json({
       message: "Profil berhasil diperbarui",
       token: newToken,
-      user: { id: updatedUser._id, name: updatedUser.name, email: updatedUser.email },
+      user: { id: updatedUser._id, name: updatedUser.name, email: updatedUser.email, role: updatedUser.role },
     });
   } catch (error) {
     console.error("Update profile error:", error);
@@ -177,12 +179,13 @@ export const login = async (req: Request, res: Response) => {
       id: user._id.toString(),
       name: user.name,
       email: user.email,
+      role: user.role,
     });
 
     res.status(200).json({
       message: "Berhasil masuk",
       token,
-      user: { id: user._id, name: user.name, email: user.email },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
     });
   } catch (error) {
     console.error("Login error:", error);

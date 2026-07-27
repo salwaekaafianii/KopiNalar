@@ -136,7 +136,7 @@ class PaymentController extends GetxController {
 
     // Simpan pesanan ke backend
     try {
-      final ApiService _apiService = ApiService();
+      final ApiService _apiService = Get.find<ApiService>();
 
       // Konversi items dari _orderArgs
       final List<Map<String, dynamic>> items = [];
@@ -156,15 +156,14 @@ class PaymentController extends GetxController {
       final totalStr = totalPayment.replaceAll(RegExp(r'[^0-9]'), '');
       final totalNumeric = double.tryParse(totalStr) ?? 0.0;
 
-      // Status: COD jadi "processing", transfer/EWallet jadi "paid"
-      final orderStatus = paymentMethodName == 'COD (Bayar di Tempat)' ? 'processing' : 'paid';
-
+      // Status: Semua pembayaran jadi "pending" dulu menunggu konfirmasi admin
+      // COD juga pending sampai admin konfirmasi
       await _apiService.createOrder(
         items: items,
         totalPayment: totalNumeric,
         shippingCost: 10000,
         paymentMethod: paymentMethodName,
-        status: orderStatus,
+        status: 'pending',
         customer: {
           'name': _orderArgs?['name'] ?? '',
           'phone': _orderArgs?['phone'] ?? '',

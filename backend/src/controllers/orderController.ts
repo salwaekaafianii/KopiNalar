@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { AuthRequest } from "../middleware/auth";
 import Order from "../models/Order";
+import Notification from "../models/Notification";
 
 // ============================================================
 // POST /orders — Buat pesanan baru
@@ -61,10 +62,37 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
     // Ambil item yang baru ditambahkan (last item)
     const newOrder = order.items[order.items.length - 1];
 
+    // Auto-create notifikasi untuk user
+    const firstItem = items[0];
+    const itemCount = items.length;
+    const itemLabel =
+      itemCount > 1
+        ? `${firstItem.name} dan ${itemCount - 1} item lainnya`
+        : firstItem.name;
+
+    // Format rupiah manual (hindari .toLocaleString yang bermasalah)
+    const formattedPrice = Math.round(Number(totalPayment))
+      .toString()
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    await Notification.create({
+      userId: req.user?.id,
+      title: "Pesanan Berhasil Dibuat",
+      message: `Pesanan ${itemLabel} sebesar Rp${formattedPrice} berhasil dibuat.`,
+      type: "order",
+      metadata: {
+        orderId: newOrder._id,
+        totalPayment,
+        status: "pending",
+      },
+    });
+
     res.status(201).json({ success: true, data: newOrder });
   } catch (error) {
     console.error("Create order error:", error);
-    res.status(500).json({ success: false, message: "Gagal membuat pesanan" });
+    const errorMessage =
+      error instanceof Error ? error.message : "Gagal membuat pesanan";
+    res.status(500).json({ success: false, message: errorMessage });
   }
 };
 
@@ -107,4 +135,3 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ success: false, message: "Gagal mengambil detail pesanan" });
   }
 };
-

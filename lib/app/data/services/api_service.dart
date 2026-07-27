@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'auth_service.dart';
 
 class ApiService {
-  static const String baseUrl = "http://192.168.0.107:5000";
+  static const String baseUrl = "http://172.17.206.68:5000";
 
   /// Mengambil AuthService dari GetX (instance yang sudah di-register di main)
   AuthService get _authService => Get.find<AuthService>();
@@ -408,5 +408,123 @@ class ApiService {
       throw Exception("Gagal mengambil pesanan");
     }
   }
-}
 
+  // ============================================================
+  // NOTIFICATIONS — GET NOTIFICATIONS
+  // ============================================================
+  Future<List<dynamic>> getNotifications() async {
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse("$baseUrl/notifications"),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['data'] ?? [];
+    } else {
+      throw Exception("Gagal mengambil notifikasi");
+    }
+  }
+
+  // ============================================================
+  // NOTIFICATIONS — MARK AS READ
+  // ============================================================
+  Future<void> markNotificationAsRead(String id) async {
+    final headers = await _getHeaders();
+    final response = await http.put(
+      Uri.parse("$baseUrl/notifications/$id/read"),
+      headers: headers,
+    );
+
+    if (response.statusCode != 200) {
+      final data = jsonDecode(response.body);
+      throw Exception(data['message'] ?? "Gagal menandai notifikasi");
+    }
+  }
+
+  // ============================================================
+  // NOTIFICATIONS — MARK ALL AS READ
+  // ============================================================
+  Future<void> markAllNotificationsAsRead() async {
+    final headers = await _getHeaders();
+    final response = await http.put(
+      Uri.parse("$baseUrl/notifications/read-all"),
+      headers: headers,
+    );
+
+    if (response.statusCode != 200) {
+      final data = jsonDecode(response.body);
+      throw Exception(data['message'] ?? "Gagal menandai semua notifikasi");
+    }
+  }
+
+  // ============================================================
+  // NOTIFICATIONS — DELETE NOTIFICATION
+  // ============================================================
+  Future<void> deleteNotification(String id) async {
+    final headers = await _getHeaders();
+    final response = await http.delete(
+      Uri.parse("$baseUrl/notifications/$id"),
+      headers: headers,
+    );
+
+    if (response.statusCode != 200) {
+      final data = jsonDecode(response.body);
+      throw Exception(data['message'] ?? "Gagal menghapus notifikasi");
+    }
+  }
+
+  // ============================================================
+  // ADMIN — GET ALL ORDERS
+  // ============================================================
+  Future<List<dynamic>> getAdminOrders() async {
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse("$baseUrl/admin/orders"),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['data'] ?? [];
+    } else {
+      throw Exception("Gagal mengambil data pesanan");
+    }
+  }
+
+  // ============================================================
+  // ADMIN — UPDATE ORDER STATUS
+  // ============================================================
+  Future<void> updateOrderStatus(String orderId, String status) async {
+    final headers = await _getHeaders();
+    final response = await http.put(
+      Uri.parse("$baseUrl/admin/orders/$orderId/status"),
+      headers: headers,
+      body: jsonEncode({"status": status}),
+    );
+
+    if (response.statusCode != 200) {
+      final data = jsonDecode(response.body);
+      throw Exception(data['message'] ?? "Gagal memperbarui status");
+    }
+  }
+
+  // ============================================================
+  // ADMIN — GET ORDER STATS
+  // ============================================================
+  Future<Map<String, dynamic>> getOrderStats() async {
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse("$baseUrl/admin/orders/stats"),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['data'] ?? {};
+    } else {
+      throw Exception("Gagal mengambil statistik");
+    }
+  }
+}

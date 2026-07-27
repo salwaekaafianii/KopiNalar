@@ -9,6 +9,8 @@ import cartRoutes from "./routes/cartRoutes";
 import addressRoutes from "./routes/addressRoutes";
 import favoriteRoutes from "./routes/favoriteRoutes";
 import orderRoutes from "./routes/orderRoutes";
+import notificationRoutes from "./routes/notificationRoutes";
+import adminRoutes from "./routes/adminRoutes";
 
 dotenv.config();
 
@@ -25,6 +27,8 @@ app.use("/cart", cartRoutes);
 app.use("/address", addressRoutes);
 app.use("/favorites", favoriteRoutes);
 app.use("/orders", orderRoutes);
+app.use("/notifications", notificationRoutes);
+app.use("/admin", adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 
