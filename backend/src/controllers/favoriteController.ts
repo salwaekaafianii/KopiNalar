@@ -7,8 +7,15 @@ import Favorite from "../models/Favorite";
 // ============================================================
 export const getFavorites = async (req: AuthRequest, res: Response) => {
   try {
-    const favorites = await Favorite.find({ userId: req.user?.id }).sort({ createdAt: -1 });
-    res.json({ success: true, data: favorites });
+    let favorite = await Favorite.findOne({ userId: req.user?.id });
+
+    if (!favorite) {
+      // Buat dokumen kosong jika belum ada
+      favorite = new Favorite({ userId: req.user?.id, items: [] });
+      await favorite.save();
+    }
+
+    res.json({ success: true, data: favorite.items });
   } catch (error) {
     res.status(500).json({ success: false, message: "Gagal mengambil favorit" });
   }
@@ -25,14 +32,20 @@ export const addFavorite = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ success: false, message: "Nama produk wajib diisi" });
     }
 
-    // Cek apakah sudah pernah di-favorite
-    const existing = await Favorite.findOne({ userId: req.user?.id, name });
-    if (existing) {
+    // Cari atau buat dokumen favorite untuk user ini
+    let favorite = await Favorite.findOne({ userId: req.user?.id });
+    if (!favorite) {
+      favorite = new Favorite({ userId: req.user?.id, items: [] });
+    }
+
+    // Cek apakah produk sudah ada di items
+    const exists = favorite.items.some((item: any) => item.name === name);
+    if (exists) {
       return res.status(400).json({ success: false, message: "Produk sudah di favorit" });
     }
 
-    const newFavorite = await Favorite.create({
-      userId: req.user?.id,
+    // Tambah item baru
+    favorite.items.push({
       name,
       category: category || "",
       price: price || "",
@@ -42,30 +55,35 @@ export const addFavorite = async (req: AuthRequest, res: Response) => {
       productId: productId || "",
     });
 
-    res.status(201).json({ success: true, data: newFavorite });
+    await favorite.save();
+
+    res.status(201).json({ success: true, data: favorite.items });
   } catch (error) {
     res.status(500).json({ success: false, message: "Gagal menambah favorit" });
   }
 };
 
 // ============================================================
-// DELETE /favorites/:id — Hapus favorit berdasarkan product name
+// DELETE /favorites/:name — Hapus favorit berdasarkan product name
 // ============================================================
 export const removeFavorite = async (req: AuthRequest, res: Response) => {
   try {
     const { name } = req.params;
     const decodedName = decodeURIComponent(name as string);
 
-    const favorite = await Favorite.findOneAndDelete({
-      userId: req.user?.id,
-      name: decodedName,
-    });
+    const result = await Favorite.updateOne(
+      { userId: req.user?.id },
+      { $pull: { items: { name: decodedName } } }
+    );
 
-    if (!favorite) {
+    if (result.modifiedCount === 0) {
       return res.status(404).json({ success: false, message: "Favorit tidak ditemukan" });
     }
 
-    res.json({ success: true, message: "Favorit berhasil dihapus" });
+    // Ambil data terbaru
+    const updated = await Favorite.findOne({ userId: req.user?.id });
+
+    res.json({ success: true, message: "Favorit berhasil dihapus", data: updated?.items ?? [] });
   } catch (error) {
     res.status(500).json({ success: false, message: "Gagal menghapus favorit" });
   }

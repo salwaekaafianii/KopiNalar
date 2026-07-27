@@ -28,8 +28,14 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ success: false, message: "Alamat pengiriman wajib diisi" });
     }
 
-    const newOrder = await Order.create({
-      userId: req.user?.id,
+    // Cari atau buat dokumen order untuk user ini
+    let order = await Order.findOne({ userId: req.user?.id });
+    if (!order) {
+      order = new Order({ userId: req.user?.id, items: [] });
+    }
+
+    // Tambah order baru ke dalam array items
+    order.items.push({
       items,
       totalPayment,
       shippingCost: shippingCost || 10000,
@@ -47,7 +53,13 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         lat: address.lat || "",
         lng: address.lng || "",
       },
+      createdAt: new Date(),
     });
+
+    await order.save();
+
+    // Ambil item yang baru ditambahkan (last item)
+    const newOrder = order.items[order.items.length - 1];
 
     res.status(201).json({ success: true, data: newOrder });
   } catch (error) {
@@ -61,28 +73,36 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
 // ============================================================
 export const getOrders = async (req: AuthRequest, res: Response) => {
   try {
-    const orders = await Order.find({ userId: req.user?.id }).sort({ createdAt: -1 });
-    res.json({ success: true, data: orders });
+    const order = await Order.findOne({ userId: req.user?.id });
+
+    if (!order) {
+      return res.json({ success: true, data: [] });
+    }
+
+    // Balik urutan (terbaru di atas)
+    const sortedItems = order.items.slice().reverse();
+
+    res.json({ success: true, data: sortedItems });
   } catch (error) {
     res.status(500).json({ success: false, message: "Gagal mengambil pesanan" });
   }
 };
 
 // ============================================================
-// GET /orders/:id — Ambil detail pesanan
+// GET /orders/:id — Ambil detail pesanan berdasarkan _id sub-document
 // ============================================================
 export const getOrderById = async (req: AuthRequest, res: Response) => {
   try {
-    const order = await Order.findOne({
-      _id: req.params.id,
-      userId: req.user?.id,
-    });
+    const order = await Order.findOne(
+      { userId: req.user?.id },
+      { items: { $elemMatch: { _id: req.params.id } } }
+    );
 
-    if (!order) {
+    if (!order || !order.items || order.items.length === 0) {
       return res.status(404).json({ success: false, message: "Pesanan tidak ditemukan" });
     }
 
-    res.json({ success: true, data: order });
+    res.json({ success: true, data: order.items[0] });
   } catch (error) {
     res.status(500).json({ success: false, message: "Gagal mengambil detail pesanan" });
   }

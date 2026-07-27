@@ -1,12 +1,7 @@
 import mongoose from "mongoose";
 
-const addressSchema = new mongoose.Schema(
+const addressItemSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
     label: { type: String, required: true },
     alamat: { type: String, required: true },
     kecamatan: { type: String, default: "" },
@@ -14,7 +9,21 @@ const addressSchema = new mongoose.Schema(
     lat: { type: String, default: "" },
     lng: { type: String, default: "" },
   },
+  { _id: false }
+);
+
+const addressSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      unique: true,
+    },
+    items: [addressItemSchema],
+  },
   { collection: "address", timestamps: true }
 );
 
 export default mongoose.model("Address", addressSchema);
+

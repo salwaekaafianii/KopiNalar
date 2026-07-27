@@ -142,6 +142,7 @@ class ProductDetailController extends GetxController {
   'image': productImage,
   'price': productPrice,
   'rating': productRating,
+  'description': productDescription,
   'category': productCategory,
 };
 

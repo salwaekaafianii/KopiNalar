@@ -7,8 +7,15 @@ import Address from "../models/Address";
 // ============================================================
 export const getAddresses = async (req: AuthRequest, res: Response) => {
   try {
-    const addresses = await Address.find({ userId: req.user?.id }).sort({ createdAt: -1 });
-    res.json({ success: true, data: addresses });
+    let address = await Address.findOne({ userId: req.user?.id });
+
+    if (!address) {
+      // Buat dokumen kosong jika belum ada
+      address = new Address({ userId: req.user?.id, items: [] });
+      await address.save();
+    }
+
+    res.json({ success: true, data: address.items });
   } catch (error) {
     res.status(500).json({ success: false, message: "Gagal mengambil alamat" });
   }
@@ -25,8 +32,14 @@ export const addAddress = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ success: false, message: "Label dan alamat wajib diisi" });
     }
 
-    const newAddress = await Address.create({
-      userId: req.user?.id,
+    // Cari atau buat dokumen address untuk user ini
+    let address = await Address.findOne({ userId: req.user?.id });
+    if (!address) {
+      address = new Address({ userId: req.user?.id, items: [] });
+    }
+
+    // Tambah item baru
+    address.items.push({
       label,
       alamat,
       kecamatan: kecamatan || "",
@@ -35,28 +48,37 @@ export const addAddress = async (req: AuthRequest, res: Response) => {
       lng: lng || "",
     });
 
-    res.status(201).json({ success: true, data: newAddress });
+    await address.save();
+
+    res.status(201).json({ success: true, data: address.items });
   } catch (error) {
     res.status(500).json({ success: false, message: "Gagal menambah alamat" });
   }
 };
 
 // ============================================================
-// DELETE /address/:id — Hapus alamat
+// DELETE /address/:label — Hapus alamat berdasarkan label
 // ============================================================
 export const deleteAddress = async (req: AuthRequest, res: Response) => {
   try {
-    const address = await Address.findOneAndDelete({
-      _id: req.params.id,
-      userId: req.user?.id,
-    });
+    const { label } = req.params;
+    const decodedLabel = decodeURIComponent(label as string);
 
-    if (!address) {
+    const result = await Address.updateOne(
+      { userId: req.user?.id },
+      { $pull: { items: { label: decodedLabel } } }
+    );
+
+    if (result.modifiedCount === 0) {
       return res.status(404).json({ success: false, message: "Alamat tidak ditemukan" });
     }
 
-    res.json({ success: true, message: "Alamat berhasil dihapus" });
+    // Ambil data terbaru
+    const updated = await Address.findOne({ userId: req.user?.id });
+
+    res.json({ success: true, message: "Alamat berhasil dihapus", data: updated?.items ?? [] });
   } catch (error) {
     res.status(500).json({ success: false, message: "Gagal menghapus alamat" });
   }
 };
+

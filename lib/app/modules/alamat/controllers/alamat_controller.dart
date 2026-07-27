@@ -121,7 +121,7 @@ class AlamatController extends GetxController {
     }
 
     try {
-      final newAddress = await _apiService.addAddress(
+      await _apiService.addAddress(
         label: name,
         alamat: address,
         kecamatan: kecamatan,
@@ -130,8 +130,8 @@ class AlamatController extends GetxController {
         lng: formLngController.text,
       );
 
-      // Tambahkan ke list lokal
-      alamatList.insert(0, newAddress);
+      // Reload list dari backend
+      await loadAddresses();
 
       // Reset form
       formNameController.clear();
@@ -154,15 +154,15 @@ class AlamatController extends GetxController {
   // ============================================================
   Future<void> deleteAlamat(int index) async {
     final alamat = alamatList[index];
-    final String id = alamat['_id']?.toString() ?? '';
+    final String label = alamat['label']?.toString() ?? '';
 
-    if (id.isEmpty) {
+    if (label.isEmpty) {
       alamatList.removeAt(index);
       return;
     }
 
     try {
-      await _apiService.deleteAddress(id);
+      await _apiService.deleteAddress(label);
       alamatList.removeAt(index);
       showCustomSnackbar('Berhasil', 'Alamat berhasil dihapus');
     } catch (e) {

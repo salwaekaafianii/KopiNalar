@@ -8,8 +8,8 @@ import '../../../theme/snackbar_helper.dart';
 
 class HomeController extends GetxController {
   final TextEditingController searchController = TextEditingController();
-  final ApiService apiService = ApiService();
-  final AuthService authService = AuthService();
+  final ApiService apiService = Get.find<ApiService>();
+  final AuthService authService = Get.find<AuthService>();
   var isLoading = false.obs;
   var userName = ''.obs; // Nama depan user yang login
   // Reactive variables untuk sort & search

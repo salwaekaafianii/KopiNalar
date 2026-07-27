@@ -11,13 +11,8 @@ const orderItemSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const orderSchema = new mongoose.Schema(
+const orderEntrySchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
     items: [orderItemSchema],
     totalPayment: { type: Number, required: true },
     shippingCost: { type: Number, default: 10000 },
@@ -39,6 +34,20 @@ const orderSchema = new mongoose.Schema(
       lat: { type: String, default: "" },
       lng: { type: String, default: "" },
     },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { _id: true }
+);
+
+const orderSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      unique: true,
+    },
+    items: [orderEntrySchema],
   },
   { collection: "orders", timestamps: true }
 );

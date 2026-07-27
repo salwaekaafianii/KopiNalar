@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'auth_service.dart';
 
 class ApiService {
-  static const String baseUrl = "http://172.17.206.68:5000";
+  static const String baseUrl = "http://192.168.0.107:5000";
 
   /// Mengambil AuthService dari GetX (instance yang sudah di-register di main)
   AuthService get _authService => Get.find<AuthService>();
@@ -240,7 +240,7 @@ class ApiService {
   // ============================================================
   // ADDRESS - ADD ADDRESS
   // ============================================================
-  Future<Map<String, dynamic>> addAddress({
+  Future<List<dynamic>> addAddress({
     required String label,
     required String alamat,
     required String kecamatan,
@@ -274,10 +274,10 @@ class ApiService {
   // ============================================================
   // ADDRESS - DELETE ADDRESS
   // ============================================================
-  Future<void> deleteAddress(String id) async {
+  Future<void> deleteAddress(String label) async {
     final headers = await _getHeaders();
     final response = await http.delete(
-      Uri.parse("$baseUrl/address/$id"),
+      Uri.parse("$baseUrl/address/${Uri.encodeComponent(label)}"),
       headers: headers,
     );
 
@@ -308,7 +308,7 @@ class ApiService {
   // ============================================================
   // FAVORITES - ADD FAVORITE
   // ============================================================
-  Future<Map<String, dynamic>> addFavorite({
+  Future<void> addFavorite({
     required String name,
     required String category,
     required String price,
@@ -334,9 +334,7 @@ class ApiService {
 
     final data = jsonDecode(response.body);
 
-    if (response.statusCode == 201) {
-      return data['data'];
-    } else {
+    if (response.statusCode != 201) {
       throw Exception(data['message'] ?? "Gagal menambah favorit");
     }
   }

@@ -9,6 +9,7 @@ router.use(verifyToken);
 
 router.get("/", getAddresses);
 router.post("/", addAddress);
-router.delete("/:id", deleteAddress);
+router.delete("/:label", deleteAddress);
 
 export default router;
+

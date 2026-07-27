@@ -6,8 +6,8 @@ class FavoriteController extends GetxController {
   final favoriteItems = <Map<String, dynamic>>[].obs;
   final isLoading = false.obs;
 
-  final ApiService _apiService = ApiService();
-  final AuthService _authService = AuthService();
+  final ApiService _apiService = Get.find<ApiService>();
+  final AuthService _authService = Get.find<AuthService>();
 
   @override
   void onInit() {

@@ -1,12 +1,7 @@
 import mongoose from "mongoose";
 
-const favoriteSchema = new mongoose.Schema(
+const favoriteItemSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
     productId: { type: String, default: "" },
     name: { type: String, required: true },
     category: { type: String, default: "" },
@@ -15,11 +10,21 @@ const favoriteSchema = new mongoose.Schema(
     description: { type: String, default: "" },
     image: { type: String, default: "" },
   },
-  { collection: "favorites", timestamps: true }
+  { _id: false }
 );
 
-// Supaya user tidak bisa nambah product yang sama dua kali
-favoriteSchema.index({ userId: 1, name: 1 }, { unique: true });
+const favoriteSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      unique: true,
+    },
+    items: [favoriteItemSchema],
+  },
+  { collection: "favorites", timestamps: true }
+);
 
 export default mongoose.model("Favorite", favoriteSchema);
 
