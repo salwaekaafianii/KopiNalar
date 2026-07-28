@@ -905,8 +905,7 @@ class CheckoutView extends GetView<CheckoutController> {
                           'Buat Pesanan',
                           style: kButtonText(color: Colors.black),
                         ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.arrow_forward_rounded, size: 16),
+                
                       ],
                     ),
                   ),

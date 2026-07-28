@@ -13,6 +13,8 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       totalPayment,
       shippingCost,
       paymentMethod,
+      paymentProof,
+      paymentStatus,
       customer,
       address,
     } = req.body;
@@ -40,12 +42,27 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       items,
       totalPayment,
       shippingCost: shippingCost || 10000,
+
       paymentMethod,
+
+      // URL bukti pembayaran
+      paymentProof: paymentProof || "",
+
+      // Jika belum dikirim dari Flutter, gunakan status otomatis
+      paymentStatus:
+        paymentStatus ||
+        (paymentMethod === "COD (Bayar di Tempat)"
+          ? "unpaid"
+          : "waiting_verification"),
+
+      // Status pesanan
       status: req.body.status || "pending",
+
       customer: {
         name: customer.name,
         phone: customer.phone,
       },
+
       address: {
         label: address.label || "",
         alamat: address.alamat,
@@ -54,9 +71,9 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         lat: address.lat || "",
         lng: address.lng || "",
       },
+
       createdAt: new Date(),
     });
-
     await order.save();
 
     // Ambil item yang baru ditambahkan (last item)

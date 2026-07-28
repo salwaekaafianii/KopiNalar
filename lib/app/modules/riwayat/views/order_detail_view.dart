@@ -36,7 +36,9 @@ class OrderDetailView extends GetView {
         try {
           parsedDate = DateTime.parse(cleanDate);
         } catch (_) {
-          debugPrint('>>> ORDER DETAIL - DateTime.parse gagal untuk: "$cleanDate"');
+          debugPrint(
+            '>>> ORDER DETAIL - DateTime.parse gagal untuk: "$cleanDate"',
+          );
         }
 
         // Jika gagal, coba parse sebagai Unix timestamp (milliseconds/detik)
@@ -44,11 +46,19 @@ class OrderDetailView extends GetView {
           final number = num.tryParse(cleanDate);
           if (number != null) {
             if (number > 1000000000000) {
-              parsedDate = DateTime.fromMillisecondsSinceEpoch(number.toInt(), isUtc: true);
+              parsedDate = DateTime.fromMillisecondsSinceEpoch(
+                number.toInt(),
+                isUtc: true,
+              );
             } else {
-              parsedDate = DateTime.fromMillisecondsSinceEpoch(number.toInt() * 1000, isUtc: true);
+              parsedDate = DateTime.fromMillisecondsSinceEpoch(
+                number.toInt() * 1000,
+                isUtc: true,
+              );
             }
-            debugPrint('>>> ORDER DETAIL - Parsing sebagai Unix timestamp berhasil: $parsedDate');
+            debugPrint(
+              '>>> ORDER DETAIL - Parsing sebagai Unix timestamp berhasil: $parsedDate',
+            );
           } else {
             debugPrint('>>> ORDER DETAIL - BUKAN ANGKA: "$cleanDate"');
           }
@@ -60,9 +70,13 @@ class OrderDetailView extends GetView {
           cleaned = cleaned.replaceAll(' ', 'T');
           try {
             parsedDate = DateTime.parse(cleaned);
-            debugPrint('>>> ORDER DETAIL - Parsing setelah cleaning berhasil: $parsedDate');
+            debugPrint(
+              '>>> ORDER DETAIL - Parsing setelah cleaning berhasil: $parsedDate',
+            );
           } catch (_) {
-            debugPrint('>>> ORDER DETAIL - Parsing setelah cleaning GAGAL untuk: "$cleaned"');
+            debugPrint(
+              '>>> ORDER DETAIL - Parsing setelah cleaning GAGAL untuk: "$cleaned"',
+            );
           }
         }
 
@@ -371,6 +385,11 @@ class OrderDetailView extends GetView {
                     'Metode Pembayaran',
                     order['paymentMethod']?.toString() ?? '-',
                   ),
+                  // ----- BUKTI PEMBAYARAN -----
+                  if (_shouldShowPaymentProof(order)) ...[
+                    const Divider(color: Colors.white10, height: 16),
+                    _buildPaymentProofRow(context, order),
+                  ],
                   const Divider(color: Colors.white10, height: 16),
                   _infoRowSimple(
                     'Subtotal',
@@ -488,6 +507,223 @@ class OrderDetailView extends GetView {
         borderRadius: BorderRadius.circular(10),
       ),
       child: const Icon(Icons.coffee_outlined, color: Colors.white24, size: 28),
+    );
+  }
+
+  // =========================================================
+  // BUKTI PEMBAYARAN
+  // =========================================================
+
+  /// Apakah perlu menampilkan bukti pembayaran?
+  bool _shouldShowPaymentProof(Map<String, dynamic> order) {
+    final paymentMethod = order['paymentMethod']?.toString() ?? '';
+    final paymentProof = order['paymentProof']?.toString() ?? '';
+    // COD tidak ada bukti pembayaran
+    if (paymentMethod == 'COD (Bayar di Tempat)') return false;
+    // Hanya tampilkan jika ada URL bukti pembayaran
+    return paymentProof.isNotEmpty;
+  }
+
+  /// Baris bukti pembayaran dengan thumbnail
+  /// Tampilan bukti pembayaran
+  /// Gambar ditaruh di bawah dan bisa langsung ditekan
+  Widget _buildPaymentProofRow(
+    BuildContext context,
+    Map<String, dynamic> order,
+  ) {
+    final paymentProof = order['paymentProof']?.toString() ?? '';
+
+    if (paymentProof.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Judul bukti pembayaran
+        Row(
+          children: [
+            const Icon(
+              Icons.receipt_long_outlined,
+              color: Color(0xFFFFB74D),
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Bukti Pembayaran',
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.white54),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        // Gambar bukti pembayaran
+        GestureDetector(
+          onTap: () {
+            _showPaymentProofDialog(context, paymentProof);
+          },
+          child: Container(
+            width: double.infinity,
+            height: 220,
+            decoration: BoxDecoration(
+              color: Colors.black26,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFFFFB74D).withOpacity(0.35),
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(11),
+              child: Image.network(
+                paymentProof,
+                width: double.infinity,
+                height: 220,
+                fit: BoxFit.contain,
+
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) return child;
+
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFFFFB74D),
+                      strokeWidth: 2,
+                    ),
+                  );
+                },
+
+                errorBuilder: (context, error, stackTrace) {
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.broken_image_outlined,
+                        color: Colors.white38,
+                        size: 42,
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      Text(
+                        'Gambar gagal dimuat',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white38,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 6),
+
+        // Keterangan kecil, bukan tombol
+        Center(
+          child: Text(
+            'Ketuk gambar untuk memperbesar',
+            style: GoogleFonts.poppins(fontSize: 10, color: Colors.white30),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Dialog fullscreen untuk melihat bukti pembayaran
+  void _showPaymentProofDialog(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: Stack(
+          children: [
+            // Gambar fullscreen
+            Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (_, child, progress) {
+                      if (progress == null) return child;
+                      return Container(
+                        width: double.infinity,
+                        height: 400,
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFFFFB74D),
+                            value: progress.expectedTotalBytes != null
+                                ? progress.cumulativeBytesLoaded /
+                                      progress.expectedTotalBytes!
+                                : null,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (_, __, ___) => Container(
+                      width: double.infinity,
+                      height: 300,
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.broken_image_outlined,
+                            color: Colors.white38,
+                            size: 64,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Gagal memuat gambar',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white54,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Tombol close
+            Positioned(
+              top: 8,
+              right: 8,
+              child: GestureDetector(
+                onTap: () => Navigator.of(ctx).pop(),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

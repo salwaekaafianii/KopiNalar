@@ -1,5 +1,5 @@
+import 'dart:convert';
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -127,7 +127,7 @@ class PaymentController extends GetxController {
 
   Future<void> confirmPayment() async {
     if (paymentMethodName != 'COD (Bayar di Tempat)' &&
-        imageBytes.value == null) {
+        imagePath.value.isEmpty) {
       showCustomSnackbar("Bukti Belum Ada", "Silakan upload bukti pembayaran");
       return;
     }
@@ -156,13 +156,38 @@ class PaymentController extends GetxController {
       final totalStr = totalPayment.replaceAll(RegExp(r'[^0-9]'), '');
       final totalNumeric = double.tryParse(totalStr) ?? 0.0;
 
-      // Status: Semua pembayaran jadi "pending" dulu menunggu konfirmasi admin
-      // COD juga pending sampai admin konfirmasi
+      // =====================================================
+      // STEP 1: Upload gambar bukti pembayaran
+      // =====================================================
+      String paymentProof = '';
+
+      if (imagePath.value.isNotEmpty) {
+        print('=== UPLOAD BUKTI PEMBAYARAN ===');
+        print('File path: ${imagePath.value}');
+
+        // Upload file gambar menggunakan bytes (handle content:// URI di Android)
+        final filename = 'payment_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        paymentProof = await _apiService.uploadPaymentProofBytes(
+          imageBytes.value!,
+          filename,
+        );
+
+        print('URL bukti pembayaran: $paymentProof');
+      }
+
+      print('=== DATA YANG AKAN DIKIRIM KE ORDER ===');
+      print('Payment method: $paymentMethodName');
+      print('Payment proof URL: $paymentProof');
+
+      // =====================================================
+      // STEP 2: Buat order dengan URL gambar
+      // =====================================================
       await _apiService.createOrder(
         items: items,
         totalPayment: totalNumeric,
         shippingCost: 10000,
         paymentMethod: paymentMethodName,
+        paymentProof: paymentProof,
         status: 'pending',
         customer: {
           'name': _orderArgs?['name'] ?? '',
@@ -193,7 +218,10 @@ class PaymentController extends GetxController {
       );
     } catch (e) {
       isSubmitting.value = false;
-      showCustomSnackbar('Gagal', 'Gagal menyimpan pesanan: ${e.toString().replaceFirst('Exception: ', '')}');
+      showCustomSnackbar(
+        'Gagal',
+        'Gagal menyimpan pesanan: ${e.toString().replaceFirst('Exception: ', '')}',
+      );
     }
   }
 }

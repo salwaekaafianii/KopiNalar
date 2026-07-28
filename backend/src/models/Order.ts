@@ -17,6 +17,26 @@ const orderEntrySchema = new mongoose.Schema(
     totalPayment: { type: Number, required: true },
     shippingCost: { type: Number, default: 10000 },
     paymentMethod: { type: String, required: true },
+
+    // URL gambar bukti pembayaran
+    paymentProof: {
+      type: String,
+      default: "",
+    },
+
+    // Status verifikasi pembayaran oleh admin
+    paymentStatus: {
+      type: String,
+      enum: [
+        "unpaid",
+        "waiting_verification",
+        "verified",
+        "rejected",
+      ],
+      default: "unpaid",
+    },
+
+    // Status proses pesanan
     status: {
       type: String,
       enum: ["pending", "paid", "processing", "shipped", "delivered", "cancelled"],
@@ -45,7 +65,6 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true,
     },
     items: [orderEntrySchema],
   },

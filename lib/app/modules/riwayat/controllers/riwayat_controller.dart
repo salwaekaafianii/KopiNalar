@@ -1,7 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:kopi_bnsp/app/data/services/api_service.dart';
-
 
 class RiwayatController extends GetxController {
   final orders = <Map<String, dynamic>>[].obs;
@@ -52,10 +52,16 @@ class RiwayatController extends GetxController {
         if (number != null) {
           // Coba sebagai milliseconds (13 digit)
           if (number > 1000000000000) {
-            parsedDate = DateTime.fromMillisecondsSinceEpoch(number.toInt(), isUtc: true);
+            parsedDate = DateTime.fromMillisecondsSinceEpoch(
+              number.toInt(),
+              isUtc: true,
+            );
           } else {
             // Coba sebagai seconds (10 digit)
-            parsedDate = DateTime.fromMillisecondsSinceEpoch(number.toInt() * 1000, isUtc: true);
+            parsedDate = DateTime.fromMillisecondsSinceEpoch(
+              number.toInt() * 1000,
+              isUtc: true,
+            );
           }
           print('>>> Parsing sebagai Unix timestamp berhasil: $parsedDate');
         } else {
@@ -102,9 +108,88 @@ class RiwayatController extends GetxController {
     return '#KPN-$idSuffix';
   }
 
-  String getStatusLabel(String? status) {
-    // COD & transfer/bukti pembayaran langsung dianggap "Selesai"
-    return 'Selesai';
+  String getStatusLabel(String? status, String? paymentStatus) {
+    // Pesanan dibatalkan, baik karena bukti ditolak
+    // maupun karena melewati batas waktu 2 hari
+    if (status == 'cancelled') {
+      if (paymentStatus == 'rejected') {
+        return 'Pembayaran Ditolak';
+      }
+
+      return 'Dibatalkan Otomatis';
+    }
+
+    // Pembayaran transfer sedang dicek admin
+    if (paymentStatus == 'waiting_verification') {
+      return 'Menunggu Verifikasi';
+    }
+
+    // Bukti pembayaran ditolak admin
+    if (paymentStatus == 'rejected') {
+      return 'Pembayaran Ditolak';
+    }
+
+    // Pembayaran sudah diverifikasi admin
+    if (paymentStatus == 'verified' && status == 'pending') {
+      return 'Pembayaran Berhasil';
+    }
+
+    // Status proses pesanan
+    switch (status) {
+      case 'processing':
+        return 'Sedang Diproses';
+
+      case 'shipped':
+        return 'Sedang Dikirim';
+
+      case 'delivered':
+        return 'Selesai';
+
+      case 'pending':
+        return 'Menunggu Pembayaran';
+
+      default:
+        return 'Menunggu';
+    }
+  }
+
+  Color getStatusColor(String? status, String? paymentStatus) {
+    // Pesanan dibatalkan
+    if (status == 'cancelled') {
+      return Colors.red;
+    }
+
+    // Bukti pembayaran ditolak
+    if (paymentStatus == 'rejected') {
+      return Colors.red;
+    }
+
+    // Menunggu admin mengecek bukti
+    if (paymentStatus == 'waiting_verification') {
+      return Colors.orange;
+    }
+
+    // Pembayaran sudah dikonfirmasi
+    if (paymentStatus == 'verified' && status == 'pending') {
+      return Colors.blue;
+    }
+
+    switch (status) {
+      case 'processing':
+        return Colors.blue;
+
+      case 'shipped':
+        return Colors.purple;
+
+      case 'delivered':
+        return Colors.green;
+
+      case 'pending':
+        return Colors.orange;
+
+      default:
+        return Colors.grey;
+    }
   }
 
   String getFormatRupiah(dynamic amount) {

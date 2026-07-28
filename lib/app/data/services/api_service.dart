@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 import 'auth_service.dart';
 
 class ApiService {
-  static const String baseUrl = "http://192.168.1.22:5000";
+  static const String baseUrl = "http://172.28.140.68:5000";
 
   /// Mengambil AuthService dari GetX (instance yang sudah di-register di main)
   AuthService get _authService => Get.find<AuthService>();
@@ -12,9 +14,7 @@ class ApiService {
   /// Generate headers dengan token Authorization jika tersedia
   Future<Map<String, String>> _getHeaders() async {
     final token = await _authService.getToken();
-    final headers = <String, String>{
-      "Content-Type": "application/json",
-    };
+    final headers = <String, String>{"Content-Type": "application/json"};
     if (token != null && token.isNotEmpty) {
       headers["Authorization"] = "Bearer $token";
     }
@@ -46,11 +46,7 @@ class ApiService {
     final response = await http.post(
       Uri.parse("$baseUrl/auth/register"),
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "name": name,
-        "email": email,
-        "password": password,
-      }),
+      body: jsonEncode({"name": name, "email": email, "password": password}),
     );
 
     final data = jsonDecode(response.body);
@@ -79,10 +75,7 @@ class ApiService {
     final response = await http.post(
       Uri.parse("$baseUrl/auth/login"),
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "email": email,
-        "password": password,
-      }),
+      body: jsonEncode({"email": email, "password": password}),
     );
 
     final data = jsonDecode(response.body);
@@ -129,18 +122,17 @@ class ApiService {
     String? password,
   }) async {
     final headers = await _getHeaders();
-    final body = <String, dynamic>{
-      "name": name,
-      "email": email,
-    };
+    final body = <String, dynamic>{"name": name, "email": email};
     if (password != null && password.isNotEmpty) {
       body["password"] = password;
     }
-    final response = await http.put(
-      Uri.parse("$baseUrl/auth/profile"),
-      headers: headers,
-      body: jsonEncode(body),
-    ).timeout(const Duration(seconds: 10));
+    final response = await http
+        .put(
+          Uri.parse("$baseUrl/auth/profile"),
+          headers: headers,
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 10));
 
     final data = jsonDecode(response.body);
 
@@ -186,7 +178,9 @@ class ApiService {
   // ============================================================
   // CART - SYNC CART
   // ============================================================
-  Future<Map<String, dynamic>> syncCart(List<Map<String, dynamic>> items) async {
+  Future<Map<String, dynamic>> syncCart(
+    List<Map<String, dynamic>> items,
+  ) async {
     final headers = await _getHeaders();
     final response = await http.put(
       Uri.parse("$baseUrl/cart/sync"),
@@ -356,18 +350,65 @@ class ApiService {
   }
 
   // ============================================================
-  // ORDER - CREATE ORDER
+  // UPLOAD - Upload bukti pembayaran (via bytes)
   // ============================================================
-  Future<Map<String, dynamic>> createOrder({
+  Future<String> uploadPaymentProofBytes(Uint8List bytes, String filename) async {
+    final token = await _authService.getToken();
+
+    final request = http.MultipartRequest(
+      "POST",
+      Uri.parse("$baseUrl/upload"),
+    );
+
+    // Set auth header
+    if (token != null && token.isNotEmpty) {
+      request.headers["Authorization"] = "Bearer $token";
+    }
+
+    // Attach file using bytes (handle content:// URI di Android)
+    // Akhiri filename dengan .jpg agar backend bisa deteksi dari ekstensi
+    final finalFilename = filename.endsWith('.jpg') ? filename : '$filename.jpg';
+    request.files.add(http.MultipartFile.fromBytes(
+      "file",
+      bytes,
+      filename: finalFilename,
+    ));
+
+    // Kirim request dengan timeout lebih panjang (30 detik)
+    final streamedResponse = await request.send().timeout(
+      const Duration(seconds: 30),
+    );
+
+    final response = await http.Response.fromStream(streamedResponse);
+
+    // Handle non-JSON response (misal 404 HTML karena backend belum restart)
+    if (response.headers['content-type']?.contains('text/html') == true) {
+      throw Exception("Server tidak merespon dengan benar. Pastikan backend sudah di-restart.");
+    }
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 201) {
+      // Kembalikan URL file yang bisa diakses
+      final url = data['data']['url'] as String;
+      return "$baseUrl$url";
+    } else {
+      throw Exception(data['message'] ?? "Gagal mengupload bukti pembayaran");
+    }
+  }
+
+  Future<dynamic> createOrder({
     required List<Map<String, dynamic>> items,
     required double totalPayment,
     required double shippingCost,
     required String paymentMethod,
+    required String paymentProof,
     required String status,
     required Map<String, dynamic> customer,
     required Map<String, dynamic> address,
   }) async {
     final headers = await _getHeaders();
+
     final response = await http.post(
       Uri.parse("$baseUrl/orders"),
       headers: headers,
@@ -376,6 +417,10 @@ class ApiService {
         "totalPayment": totalPayment,
         "shippingCost": shippingCost,
         "paymentMethod": paymentMethod,
+
+        // INI YANG TADI KURANG
+        "paymentProof": paymentProof,
+
         "status": status,
         "customer": customer,
         "address": address,
