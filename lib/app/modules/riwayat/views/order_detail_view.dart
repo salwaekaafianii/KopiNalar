@@ -24,14 +24,60 @@ class OrderDetailView extends GetView {
     }
 
     String formatDate(String? dateStr) {
-      if (dateStr == null || dateStr.isEmpty) return '-';
+      if (dateStr == null || dateStr.trim().isEmpty) return '-';
 
       try {
-        final date = DateTime.parse(dateStr).toLocal();
+        final cleanDate = dateStr.trim();
+        debugPrint('>>> ORDER DETAIL - Nilai createdAt mentah: "$cleanDate"');
 
-        return DateFormat('dd MMM yyyy HH:mm', 'id_ID').format(date);
+        DateTime? parsedDate;
+
+        // Coba parse sebagai ISO 8601 string
+        try {
+          parsedDate = DateTime.parse(cleanDate);
+        } catch (_) {
+          debugPrint('>>> ORDER DETAIL - DateTime.parse gagal untuk: "$cleanDate"');
+        }
+
+        // Jika gagal, coba parse sebagai Unix timestamp (milliseconds/detik)
+        if (parsedDate == null) {
+          final number = num.tryParse(cleanDate);
+          if (number != null) {
+            if (number > 1000000000000) {
+              parsedDate = DateTime.fromMillisecondsSinceEpoch(number.toInt(), isUtc: true);
+            } else {
+              parsedDate = DateTime.fromMillisecondsSinceEpoch(number.toInt() * 1000, isUtc: true);
+            }
+            debugPrint('>>> ORDER DETAIL - Parsing sebagai Unix timestamp berhasil: $parsedDate');
+          } else {
+            debugPrint('>>> ORDER DETAIL - BUKAN ANGKA: "$cleanDate"');
+          }
+        }
+
+        // Jika masih gagal, coba bersihkan string
+        if (parsedDate == null) {
+          String cleaned = cleanDate.replaceAll(RegExp(r'[Zz]$'), '');
+          cleaned = cleaned.replaceAll(' ', 'T');
+          try {
+            parsedDate = DateTime.parse(cleaned);
+            debugPrint('>>> ORDER DETAIL - Parsing setelah cleaning berhasil: $parsedDate');
+          } catch (_) {
+            debugPrint('>>> ORDER DETAIL - Parsing setelah cleaning GAGAL untuk: "$cleaned"');
+          }
+        }
+
+        if (parsedDate == null) {
+          debugPrint('>>> ORDER DETAIL - GAGAL TOTAL: "$cleanDate"');
+          return 'Tanggal tidak valid';
+        }
+
+        // Ubah ke zona waktu WIB (UTC+7) secara eksplisit
+        final wibDate = parsedDate.add(Duration(hours: 7));
+
+        return '${DateFormat('dd MMM yyyy, HH:mm', 'en_US').format(wibDate)} WIB';
       } catch (e) {
-        return dateStr;
+        debugPrint('>>> ORDER DETAIL - EXCEPTION: $e');
+        return 'Tanggal tidak valid';
       }
     }
 

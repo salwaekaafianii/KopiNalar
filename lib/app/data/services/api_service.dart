@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'auth_service.dart';
 
 class ApiService {
-  static const String baseUrl = "http://172.17.206.68:5000";
+  static const String baseUrl = "http://192.168.1.22:5000";
 
   /// Mengambil AuthService dari GetX (instance yang sudah di-register di main)
   AuthService get _authService => Get.find<AuthService>();

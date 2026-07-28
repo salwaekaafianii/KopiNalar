@@ -311,34 +311,57 @@ class CheckoutView extends GetView<CheckoutController> {
                                   ),
                                   const SizedBox(height: 10),
                                   ...alamatController.alamatList.map((alamat) {
-                                    final alamatId = alamat['_id']?.toString() ?? '';
-                                    final isSelected = controller.selectedAddressType.value == 'saved' &&
-                                        controller.selectedSavedAddress.value?['_id']?.toString() == alamatId;
+                                    final alamatId =
+                                        alamat['_id']?.toString() ?? '';
+                                    final isSelected =
+                                        controller.selectedAddressType.value ==
+                                            'saved' &&
+                                        controller
+                                                .selectedSavedAddress
+                                                .value?['_id']
+                                                ?.toString() ==
+                                            alamatId;
 
                                     return GestureDetector(
-                                      onTap: () => controller.selectSavedAddress(alamat as Map<String, dynamic>),
+                                      onTap: () =>
+                                          controller.selectSavedAddress(
+                                            alamat as Map<String, dynamic>,
+                                          ),
                                       child: Container(
                                         width: double.infinity,
-                                        margin: const EdgeInsets.only(bottom: 10),
+                                        margin: const EdgeInsets.only(
+                                          bottom: 10,
+                                        ),
                                         padding: const EdgeInsets.all(14),
                                         decoration: BoxDecoration(
                                           color: isSelected
-                                              ? const Color(0xFFFFB74D).withOpacity(0.08)
+                                              ? const Color(
+                                                  0xFFFFB74D,
+                                                ).withOpacity(0.08)
                                               : Colors.white.withOpacity(0.03),
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                           border: Border.all(
                                             color: isSelected
-                                                ? const Color(0xFFFFB74D).withOpacity(0.5)
-                                                : Colors.white.withOpacity(0.08),
+                                                ? const Color(
+                                                    0xFFFFB74D,
+                                                  ).withOpacity(0.5)
+                                                : Colors.white.withOpacity(
+                                                    0.08,
+                                                  ),
                                           ),
                                         ),
                                         child: Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Icon(
                                               isSelected
-                                                  ? Icons.radio_button_checked_rounded
-                                                  : Icons.radio_button_unchecked_rounded,
+                                                  ? Icons
+                                                        .radio_button_checked_rounded
+                                                  : Icons
+                                                        .radio_button_unchecked_rounded,
                                               color: isSelected
                                                   ? const Color(0xFFFFB74D)
                                                   : Colors.white38,
@@ -347,13 +370,15 @@ class CheckoutView extends GetView<CheckoutController> {
                                             const SizedBox(width: 12),
                                             Expanded(
                                               child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
                                                 children: [
                                                   Text(
                                                     alamat['label'] ?? '',
                                                     style: GoogleFonts.poppins(
                                                       fontSize: 13,
-                                                      fontWeight: FontWeight.bold,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                       color: Colors.white,
                                                     ),
                                                   ),
@@ -385,7 +410,8 @@ class CheckoutView extends GetView<CheckoutController> {
                                   const SizedBox(height: 6),
                                   OutlinedButton.icon(
                                     onPressed: () {
-                                      controller.isShowingSavedAddresses.value = false;
+                                      controller.isShowingSavedAddresses.value =
+                                          false;
                                     },
                                     icon: const Icon(
                                       Icons.close_rounded,
@@ -401,8 +427,13 @@ class CheckoutView extends GetView<CheckoutController> {
                                       ),
                                     ),
                                     style: OutlinedButton.styleFrom(
-                                      minimumSize: const Size(double.infinity, 42),
-                                      side: BorderSide(color: Colors.white.withOpacity(0.08)),
+                                      minimumSize: const Size(
+                                        double.infinity,
+                                        42,
+                                      ),
+                                      side: BorderSide(
+                                        color: Colors.white.withOpacity(0.08),
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
                                       ),
@@ -415,7 +446,8 @@ class CheckoutView extends GetView<CheckoutController> {
                                 width: double.infinity,
                                 child: OutlinedButton.icon(
                                   onPressed: () {
-                                    controller.isShowingSavedAddresses.value = true;
+                                    controller.isShowingSavedAddresses.value =
+                                        true;
                                   },
                                   icon: const Icon(
                                     Icons.location_on_outlined,
@@ -431,8 +463,13 @@ class CheckoutView extends GetView<CheckoutController> {
                                     ),
                                   ),
                                   style: OutlinedButton.styleFrom(
-                                    minimumSize: const Size(double.infinity, 42),
-                                    side: BorderSide(color: Colors.white.withOpacity(0.08)),
+                                    minimumSize: const Size(
+                                      double.infinity,
+                                      42,
+                                    ),
+                                    side: BorderSide(
+                                      color: Colors.white.withOpacity(0.08),
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10),
                                     ),
@@ -674,6 +711,123 @@ class CheckoutView extends GetView<CheckoutController> {
             ),
             const SizedBox(height: 16),
 
+            // =====================================================
+            // METODE PEMBAYARAN
+            // =====================================================
+            _buildSectionCard(
+              title: 'Metode Pembayaran',
+              icon: Icons.account_balance_wallet_outlined,
+              children: [
+                Obx(
+                  () => Column(
+                    children: controller.paymentMethods.map((payment) {
+                      final paymentName = payment['name'].toString();
+
+                      final isSelected =
+                          controller.selectedPaymentMethod.value == paymentName;
+
+                      return GestureDetector(
+                        onTap: () {
+                          controller.changePaymentMethod(paymentName);
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? const Color(0xFFFFB74D).withOpacity(0.10)
+                                : Colors.white.withOpacity(0.03),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected
+                                  ? const Color(0xFFFFB74D)
+                                  : Colors.white.withOpacity(0.08),
+                              width: isSelected ? 1.3 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              // ICON METODE PEMBAYARAN
+                              Container(
+                                width: 46,
+                                height: 46,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? const Color(
+                                          0xFFFFB74D,
+                                        ).withOpacity(0.15)
+                                      : Colors.white.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  payment['icon'] as IconData,
+                                  color: isSelected
+                                      ? const Color(0xFFFFB74D)
+                                      : Colors.white54,
+                                  size: 23,
+                                ),
+                              ),
+
+                              const SizedBox(width: 12),
+
+                              // NAMA DAN DESKRIPSI
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      paymentName,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : Colors.white70,
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 3),
+
+                                    Text(
+                                      payment['desc'].toString(),
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 10,
+                                        color: Colors.white38,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(width: 8),
+
+                              // RADIO BUTTON
+                              Icon(
+                                isSelected
+                                    ? Icons.radio_button_checked_rounded
+                                    : Icons.radio_button_unchecked_rounded,
+                                color: isSelected
+                                    ? const Color(0xFFFFB74D)
+                                    : Colors.white30,
+                                size: 22,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            // =====================================================
+            // RINGKASAN PESANAN
+            // =====================================================
             _buildSectionCard(
               title: 'Ringkasan Pesanan',
               icon: Icons.receipt_long_outlined,
