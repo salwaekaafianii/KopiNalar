@@ -191,6 +191,24 @@ class ProfileView extends GetView<ProfileController> {
                 subtitle: 'Produk favorit kamu',
                 onTap: () => Get.to(() => const FavoriteView()),
               ),
+              // Admin Panel - hanya untuk admin
+              Obx(() {
+                if (authService.isGuest.value) return const SizedBox.shrink();
+                return FutureBuilder<Map<String, dynamic>?>(
+                  future: authService.getUser(),
+                  builder: (context, snapshot) {
+                    final user = snapshot.data;
+                    final role = user?['role'] ?? '';
+                    if (role != 'admin') return const SizedBox.shrink();
+                    return _buildMenuItem(
+                      icon: Icons.admin_panel_settings_rounded,
+                      title: 'Admin Panel',
+                      subtitle: 'Kelola pesanan & dashboard',
+                      onTap: () => Get.toNamed(Routes.admin),
+                    );
+                  },
+                );
+              }),
               _buildMenuItem(
                 icon: Icons.location_on_outlined,
                 title: 'Alamat Saya',

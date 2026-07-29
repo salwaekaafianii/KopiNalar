@@ -20,6 +20,7 @@ abstract class Routes {
   static const tentang = _Paths.tentang;
   static const alamat = _Paths.alamat;
   static const pengaturan = _Paths.pengaturan;
+  static const admin = _Paths.admin;
   static const orderDetail = _Paths.orderDetail;
 }
 
@@ -43,5 +44,6 @@ abstract class _Paths {
   static const tentang = '/tentang';
   static const alamat = '/alamat';
   static const pengaturan = '/pengaturan';
+  static const admin = '/admin';
   static const orderDetail = '/order-detail';
 }

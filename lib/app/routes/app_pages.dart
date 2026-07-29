@@ -33,14 +33,14 @@ import '../modules/riwayat/views/order_detail_view.dart';
 import '../modules/riwayat/bindings/riwayat_binding.dart';
 import '../modules/notifikasi/views/notifikasi_view.dart';
 import '../modules/notifikasi/bindings/notifikasi_binding.dart';
-import '../modules/bantuan/views/bantuan_view.dart';
-import '../modules/bantuan/bindings/bantuan_binding.dart';
 import '../modules/tentang/views/tentang_view.dart';
 import '../modules/tentang/bindings/tentang_binding.dart';
 import '../modules/alamat/views/alamat_view.dart';
 import '../modules/alamat/bindings/alamat_binding.dart';
 import '../modules/pengaturan/views/pengaturan_view.dart';
 import '../modules/pengaturan/bindings/pengaturan_binding.dart';
+import '../modules/admin/views/admin_view.dart';
+import '../modules/admin/bindings/admin_binding.dart';
 
 part 'app_routes.dart';
 
@@ -126,11 +126,6 @@ class AppPages {
       binding: NotifikasiBinding(),
     ),
     GetPage(
-      name: Routes.bantuan,
-      page: () => const BantuanView(),
-      binding: BantuanBinding(),
-    ),
-    GetPage(
       name: Routes.tentang,
       page: () => const TentangView(),
       binding: TentangBinding(),
@@ -148,6 +143,11 @@ class AppPages {
     GetPage(
       name: Routes.orderDetail,
       page: () => const OrderDetailView(),
+    ),
+    GetPage(
+      name: Routes.admin,
+      page: () => const AdminView(),
+      binding: AdminBinding(),
     ),
   ];
 }

@@ -46,21 +46,68 @@ class HomeView extends GetView<HomeController> {
                       ),
                     ],
                   ),
-                  IconButton(
-                    onPressed: () => Get.toNamed('/notifikasi'),
-                    icon: const Icon(
-                      Icons.notifications_outlined,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.05),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: Colors.white.withOpacity(0.1)),
+                  Obx(() {
+                    return IconButton(
+                      onPressed: () async {
+                        await Get.toNamed('/notifikasi');
+                        controller.loadUnreadNotificationCount();
+                      },
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withOpacity(0.05),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: Colors.white.withOpacity(0.1),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+                      icon: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          const Icon(
+                            Icons.notifications_outlined,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+
+                          if (controller.unreadNotificationCount.value > 0)
+                            Positioned(
+                              right: -2,
+                              top: -2,
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                  minWidth: 18,
+                                  minHeight: 18,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    controller.unreadNotificationCount.value >
+                                            99
+                                        ? '99+'
+                                        : controller
+                                              .unreadNotificationCount
+                                              .value
+                                              .toString(),
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
@@ -179,29 +226,6 @@ class HomeView extends GetView<HomeController> {
                                     style: GoogleFonts.poppins(
                                       color: Colors.white70,
                                       fontSize: 12,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 14),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.white,
-                                      foregroundColor: Colors.black,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 8,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      elevation: 0,
-                                    ),
-                                    onPressed: () {},
-                                    child: Text(
-                                      'Klaim Sekarang',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                      ),
                                     ),
                                   ),
                                 ],

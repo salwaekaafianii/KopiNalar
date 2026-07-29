@@ -16,6 +16,18 @@ class HomeController extends GetxController {
   final selectedSort = RxString('Terlaris');
   final searchQuery = RxString('');
   var allProducts = <Map<String, String>>[].obs;
+  final unreadNotificationCount = 0.obs;
+  Future<void> loadUnreadNotificationCount() async {
+    try {
+      final notifications = await apiService.getNotifications();
+
+      unreadNotificationCount.value = notifications.where((e) {
+        return e['isRead'] == false;
+      }).length;
+    } catch (e) {
+      unreadNotificationCount.value = 0;
+    }
+  }
 
   /// Load nama user dari storage
   Future<void> loadUserName() async {
@@ -141,6 +153,7 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     loadUserName();
+    loadUnreadNotificationCount();
     getProducts();
   }
 

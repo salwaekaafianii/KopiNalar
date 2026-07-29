@@ -83,7 +83,14 @@ class RegisterController extends GetxController {
         password: password,
       );
       showCustomSnackbar('Sukses', response['message'] ?? 'Akun berhasil didaftarkan!');
-      Get.offAllNamed('/main'); // Langsung masuk ke halaman utama karena sudah login
+
+      // Cek role user
+      final role = response['user']?['role'] ?? 'user';
+      if (role == 'admin') {
+        Get.offAllNamed('/admin');
+      } else {
+        Get.offAllNamed('/main');
+      }
     } catch (e) {
       showCustomSnackbar('Gagal', e.toString().replaceFirst('Exception: ', ''));
     } finally {

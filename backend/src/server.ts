@@ -12,7 +12,7 @@ import favoriteRoutes from "./routes/favoriteRoutes";
 import orderRoutes from "./routes/orderRoutes";
 import notificationRoutes from "./routes/notificationRoutes";
 import uploadRoutes from "./routes/uploadRoutes";
-// import adminRoutes from "./routes/adminRoutes";
+import adminRoutes from "./routes/adminRoutes";
 
 dotenv.config();
 
@@ -35,21 +35,26 @@ app.use("/favorites", favoriteRoutes);
 app.use("/orders", orderRoutes);
 app.use("/notifications", notificationRoutes);
 app.use("/upload", uploadRoutes);
-// app.use("/admin", adminRoutes);
+app.use("/admin", adminRoutes);
 
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 5000;
 
-// ============================================================
-// Global error handler — pastikan SEMUA error balikin JSON
-// ============================================================
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error("Unhandled error:", err);
-  res.status(500).json({
-    success: false,
-    message: err?.message || "Terjadi kesalahan pada server",
-  });
-});
+app.use(
+  (
+    err: any,
+    _req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction
+  ) => {
+    console.error("Unhandled error:", err);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+    res.status(500).json({
+      success: false,
+      message: err?.message || "Terjadi kesalahan pada server",
+    });
+  }
+);
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
 });

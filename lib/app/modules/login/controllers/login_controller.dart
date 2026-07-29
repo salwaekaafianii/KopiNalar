@@ -40,7 +40,14 @@ class LoginController extends GetxController {
       isLoading.value = true;
       final response = await apiService.login(email: email, password: password);
       showCustomSnackbar('Sukses', response['message'] ?? 'Berhasil Masuk!');
-      Get.offAllNamed('/main');
+
+      // Cek role user
+      final role = response['user']?['role'] ?? 'user';
+      if (role == 'admin') {
+        Get.offAllNamed('/admin');
+      } else {
+        Get.offAllNamed('/main');
+      }
     } catch (e) {
       showCustomSnackbar('Gagal', e.toString().replaceFirst('Exception: ', ''));
     } finally {

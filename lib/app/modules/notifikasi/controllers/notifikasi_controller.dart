@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../data/services/api_service.dart';
+import '../../home/controllers/home_controller.dart';
 
 class NotifikasiController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
@@ -35,14 +36,16 @@ class NotifikasiController extends GetxController {
     final notif = notifications[index];
     if (notif['isRead'] == true) return;
 
-    // Optimistic update
     notif['isRead'] = true;
     notifications.refresh();
 
     try {
       await _apiService.markNotificationAsRead(notif['_id'] ?? '');
+
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().loadUnreadNotificationCount();
+      }
     } catch (e) {
-      // Rollback jika gagal
       notif['isRead'] = false;
       notifications.refresh();
     }
@@ -52,10 +55,16 @@ class NotifikasiController extends GetxController {
   Future<void> markAllAsRead() async {
     try {
       await _apiService.markAllNotificationsAsRead();
+
       for (var notif in notifications) {
         notif['isRead'] = true;
       }
+
       notifications.refresh();
+
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().loadUnreadNotificationCount();
+      }
     } catch (e) {
       Get.snackbar(
         'Error',
@@ -74,14 +83,17 @@ class NotifikasiController extends GetxController {
     final notif = notifications[index];
     final id = notif['_id'] ?? '';
 
-    // Optimistic delete
     notifications.removeAt(index);
 
     try {
       await _apiService.deleteNotification(id);
+
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().loadUnreadNotificationCount();
+      }
     } catch (e) {
-      // Rollback: tambahkan kembali
       notifications.insert(index, notif);
+
       Get.snackbar(
         'Error',
         'Gagal menghapus notifikasi',

@@ -1,12 +1,11 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 import 'auth_service.dart';
 
 class ApiService {
-  static const String baseUrl = "http://172.28.140.68:5000";
+  static const String baseUrl = "http://192.168.1.22:5000";
 
   /// Mengambil AuthService dari GetX (instance yang sudah di-register di main)
   AuthService get _authService => Get.find<AuthService>();
@@ -539,6 +538,24 @@ class ApiService {
   }
 
   // ============================================================
+  // ADMIN — GET ORDER DETAIL
+  // ============================================================
+  Future<Map<String, dynamic>> getAdminOrderDetail(String orderId) async {
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse("$baseUrl/admin/orders/$orderId"),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['data'] ?? {};
+    } else {
+      throw Exception("Gagal mengambil detail pesanan");
+    }
+  }
+
+  // ============================================================
   // ADMIN — UPDATE ORDER STATUS
   // ============================================================
   Future<void> updateOrderStatus(String orderId, String status) async {
@@ -552,6 +569,27 @@ class ApiService {
     if (response.statusCode != 200) {
       final data = jsonDecode(response.body);
       throw Exception(data['message'] ?? "Gagal memperbarui status");
+    }
+  }
+
+  // ============================================================
+  // ADMIN — VERIFY PAYMENT (accept / reject)
+  // ============================================================
+  Future<void> verifyPayment(String orderId, String action, {String? rejectReason}) async {
+    final headers = await _getHeaders();
+    final body = <String, dynamic>{"action": action};
+    if (rejectReason != null) {
+      body["rejectReason"] = rejectReason;
+    }
+    final response = await http.put(
+      Uri.parse("$baseUrl/admin/orders/$orderId/payment"),
+      headers: headers,
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode != 200) {
+      final data = jsonDecode(response.body);
+      throw Exception(data['message'] ?? "Gagal memverifikasi pembayaran");
     }
   }
 
@@ -570,6 +608,133 @@ class ApiService {
       return data['data'] ?? {};
     } else {
       throw Exception("Gagal mengambil statistik");
+    }
+  }
+
+  // ============================================================
+  // ADMIN — CREATE PRODUCT
+  // ============================================================
+  Future<Map<String, dynamic>> createProduct({
+    required String name,
+    required String category,
+    required double price,
+    required String description,
+    double rating = 0,
+    String image = "",
+  }) async {
+    final headers = await _getHeaders();
+    final response = await http.post(
+      Uri.parse("$baseUrl/products"),
+      headers: headers,
+      body: jsonEncode({
+        "name": name,
+        "category": category,
+        "price": price,
+        "rating": rating,
+        "description": description,
+        "image": image,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 201) {
+      return data['data'] ?? {};
+    } else {
+      throw Exception(data['message'] ?? "Gagal menambah produk");
+    }
+  }
+
+  // ============================================================
+  // ADMIN — UPDATE PRODUCT
+  // ============================================================
+  Future<Map<String, dynamic>> updateProduct(String id, {
+    String? name,
+    String? category,
+    double? price,
+    String? description,
+    double? rating,
+    String? image,
+  }) async {
+    final headers = await _getHeaders();
+    final body = <String, dynamic>{};
+    if (name != null) body["name"] = name;
+    if (category != null) body["category"] = category;
+    if (price != null) body["price"] = price;
+    if (description != null) body["description"] = description;
+    if (rating != null) body["rating"] = rating;
+    if (image != null) body["image"] = image;
+
+    final response = await http.put(
+      Uri.parse("$baseUrl/products/$id"),
+      headers: headers,
+      body: jsonEncode(body),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      return data['data'] ?? {};
+    } else {
+      throw Exception(data['message'] ?? "Gagal memperbarui produk");
+    }
+  }
+
+  // ============================================================
+  // ADMIN — DELETE PRODUCT
+  // ============================================================
+  Future<void> deleteProduct(String id) async {
+    final headers = await _getHeaders();
+    final response = await http.delete(
+      Uri.parse("$baseUrl/products/$id"),
+      headers: headers,
+    );
+
+    if (response.statusCode != 200) {
+      final data = jsonDecode(response.body);
+      throw Exception(data['message'] ?? "Gagal menghapus produk");
+    }
+  }
+
+  // ============================================================
+  // ADMIN — UPLOAD IMAGE (for product)
+  // ============================================================
+  Future<String> uploadImage(Uint8List bytes, String filename) async {
+    final token = await _authService.getToken();
+
+    final request = http.MultipartRequest(
+      "POST",
+      Uri.parse("$baseUrl/upload"),
+    );
+
+    if (token != null && token.isNotEmpty) {
+      request.headers["Authorization"] = "Bearer $token";
+    }
+
+    final finalFilename = filename.endsWith('.jpg') ? filename : '$filename.jpg';
+    request.files.add(http.MultipartFile.fromBytes(
+      "file",
+      bytes,
+      filename: finalFilename,
+    ));
+
+    final streamedResponse = await request.send().timeout(
+      const Duration(seconds: 30),
+    );
+
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.headers['content-type']?.contains('text/html') == true) {
+      throw Exception("Server tidak merespon dengan benar.");
+    }
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 201) {
+      final url = data['data']['url'] as String;
+      return "$baseUrl$url";
+    } else {
+      throw Exception(data['message'] ?? "Gagal mengupload gambar");
     }
   }
 }
