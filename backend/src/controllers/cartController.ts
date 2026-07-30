@@ -16,7 +16,7 @@ export const getCart = async (req: AuthRequest, res: Response) => {
 
     if (!cart) {
       // Buat cart kosong jika belum ada
-      cart = new Cart({ userId, items: [] });
+      cart = new Cart({ userId, userName: req.user?.name || "", items: [] });
       await cart.save();
     }
 

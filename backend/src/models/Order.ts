@@ -66,6 +66,10 @@ const orderSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    userName: {
+      type: String,
+      default: "",
+    },
     items: [orderEntrySchema],
   },
   { collection: "orders", timestamps: true }

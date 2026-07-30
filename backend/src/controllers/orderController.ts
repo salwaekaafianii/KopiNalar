@@ -34,7 +34,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
     // Cari atau buat dokumen order untuk user ini
     let order = await Order.findOne({ userId: req.user?.id });
     if (!order) {
-      order = new Order({ userId: req.user?.id, items: [] });
+      order = new Order({ userId: req.user?.id, userName: req.user?.name || "", items: [] });
     }
 
     // Tambah order baru ke dalam array items
@@ -92,17 +92,28 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       .toString()
       .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
-    await Notification.create({
-      userId: req.user?.id,
-      title: "Pesanan Berhasil Dibuat",
-      message: `Pesanan ${itemLabel} sebesar Rp${formattedPrice} berhasil dibuat.`,
-      type: "order",
-      metadata: {
-        orderId: newOrder._id,
-        totalPayment,
-        status: "pending",
+    // Push notification ke array items
+    await Notification.findOneAndUpdate(
+      { userId: req.user?.id },
+      {
+        $push: {
+          items: {
+            title: "Pesanan Berhasil Dibuat",
+            message: `Pesanan ${itemLabel} sebesar Rp${formattedPrice} berhasil dibuat.`,
+            type: "order",
+            isRead: false,
+            metadata: {
+              orderId: newOrder._id,
+              totalPayment,
+              status: "pending",
+            },
+            createdAt: new Date(),
+          },
+        },
+        $setOnInsert: { userId: req.user?.id, userName: req.user?.name || "" },
       },
-    });
+      { upsert: true }
+    );
 
     res.status(201).json({ success: true, data: newOrder });
   } catch (error) {

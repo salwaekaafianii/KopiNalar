@@ -1,12 +1,7 @@
 import mongoose from "mongoose";
 
-const notificationSchema = new mongoose.Schema(
+const notificationItemSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
     title: {
       type: String,
       required: true,
@@ -28,15 +23,30 @@ const notificationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { _id: true }
+);
+
+const notificationSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      unique: true,
+    },
+    userName: {
+      type: String,
+      default: "",
+    },
+    items: [notificationItemSchema],
   },
   {
     collection: "notifications",
     timestamps: true,
   }
 );
-
-// Index untuk query cepat berdasarkan userId dan createdAt
-notificationSchema.index({ userId: 1, createdAt: -1 });
 
 export default mongoose.model("Notification", notificationSchema);
 

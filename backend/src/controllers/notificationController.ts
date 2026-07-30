@@ -7,13 +7,20 @@ import Notification from "../models/Notification";
 // ============================================================
 export const getNotifications = async (req: AuthRequest, res: Response) => {
   try {
-    const notifications = await Notification.find({ userId: req.user?.id })
-      .sort({ createdAt: -1 })
-      .lean();
+    let notification = await Notification.findOne({ userId: req.user?.id });
+
+    if (!notification) {
+      // Buat dokumen kosong jika belum ada
+      notification = new Notification({ userId: req.user?.id, userName: req.user?.name || "", items: [] });
+      await notification.save();
+    }
+
+    // Balik urutan (terbaru di atas)
+    const sortedItems = notification.items.slice().reverse();
 
     res.json({
       success: true,
-      data: notifications,
+      data: sortedItems,
     });
   } catch (error) {
     console.error("Get notifications error:", error);
@@ -38,19 +45,30 @@ export const createNotification = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const notification = new Notification({
-      userId: req.user?.id,
+    // Cari atau buat dokumen notification untuk user ini
+    let notification = await Notification.findOne({ userId: req.user?.id });
+    if (!notification) {
+      notification = new Notification({ userId: req.user?.id, userName: req.user?.name || "", items: [] });
+    }
+
+    // Tambah item baru
+    notification.items.push({
       title,
       message,
       type: type || "info",
+      isRead: false,
       metadata: metadata || {},
+      createdAt: new Date(),
     });
 
     await notification.save();
 
+    // Ambil item yang baru ditambahkan (last item)
+    const newItem = notification.items[notification.items.length - 1];
+
     res.status(201).json({
       success: true,
-      data: notification,
+      data: newItem,
     });
   } catch (error) {
     console.error("Create notification error:", error);
@@ -67,8 +85,8 @@ export const createNotification = async (req: AuthRequest, res: Response) => {
 export const markAsRead = async (req: AuthRequest, res: Response) => {
   try {
     const notification = await Notification.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user?.id },
-      { isRead: true },
+      { "items._id": req.params.id, userId: req.user?.id },
+      { $set: { "items.$.isRead": true } },
       { new: true }
     );
 
@@ -79,9 +97,15 @@ export const markAsRead = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    const { id } = req.params;
+
+    const updatedItem = notification.items.find(
+      (item: any) => item._id.toString() === id
+    );
+
     res.json({
       success: true,
-      data: notification,
+      data: updatedItem,
     });
   } catch (error) {
     console.error("Mark as read error:", error);
@@ -97,9 +121,9 @@ export const markAsRead = async (req: AuthRequest, res: Response) => {
 // ============================================================
 export const markAllAsRead = async (req: AuthRequest, res: Response) => {
   try {
-    await Notification.updateMany(
-      { userId: req.user?.id, isRead: false },
-      { isRead: true }
+    await Notification.updateOne(
+      { userId: req.user?.id },
+      { $set: { "items.$[].isRead": true } }
     );
 
     res.json({
@@ -120,10 +144,11 @@ export const markAllAsRead = async (req: AuthRequest, res: Response) => {
 // ============================================================
 export const deleteNotification = async (req: AuthRequest, res: Response) => {
   try {
-    const notification = await Notification.findOneAndDelete({
-      _id: req.params.id,
-      userId: req.user?.id,
-    });
+    const notification = await Notification.findOneAndUpdate(
+      { userId: req.user?.id },
+      { $pull: { items: { _id: req.params.id } } },
+      { new: true }
+    );
 
     if (!notification) {
       return res.status(404).json({

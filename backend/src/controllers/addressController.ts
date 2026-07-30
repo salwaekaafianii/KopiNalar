@@ -11,7 +11,7 @@ export const getAddresses = async (req: AuthRequest, res: Response) => {
 
     if (!address) {
       // Buat dokumen kosong jika belum ada
-      address = new Address({ userId: req.user?.id, items: [] });
+      address = new Address({ userId: req.user?.id, userName: req.user?.name || "", items: [] });
       await address.save();
     }
 
@@ -35,7 +35,7 @@ export const addAddress = async (req: AuthRequest, res: Response) => {
     // Cari atau buat dokumen address untuk user ini
     let address = await Address.findOne({ userId: req.user?.id });
     if (!address) {
-      address = new Address({ userId: req.user?.id, items: [] });
+      address = new Address({ userId: req.user?.id, userName: req.user?.name || "", items: [] });
     }
 
     // Tambah item baru

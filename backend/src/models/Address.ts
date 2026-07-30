@@ -20,6 +20,10 @@ const addressSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    userName: {
+      type: String,
+      default: "",
+    },
     items: [addressItemSchema],
   },
   { collection: "address", timestamps: true }

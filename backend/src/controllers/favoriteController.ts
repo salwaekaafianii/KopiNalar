@@ -11,7 +11,7 @@ export const getFavorites = async (req: AuthRequest, res: Response) => {
 
     if (!favorite) {
       // Buat dokumen kosong jika belum ada
-      favorite = new Favorite({ userId: req.user?.id, items: [] });
+      favorite = new Favorite({ userId: req.user?.id, userName: req.user?.name || "", items: [] });
       await favorite.save();
     }
 
@@ -35,7 +35,7 @@ export const addFavorite = async (req: AuthRequest, res: Response) => {
     // Cari atau buat dokumen favorite untuk user ini
     let favorite = await Favorite.findOne({ userId: req.user?.id });
     if (!favorite) {
-      favorite = new Favorite({ userId: req.user?.id, items: [] });
+      favorite = new Favorite({ userId: req.user?.id, userName: req.user?.name || "", items: [] });
     }
 
     // Cek apakah produk sudah ada di items

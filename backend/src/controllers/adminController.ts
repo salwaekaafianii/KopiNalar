@@ -154,16 +154,25 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     const message =
       statusMessages[status] || `Status pesanan Anda telah diperbarui menjadi ${status}.`;
 
-    await Notification.create({
-      userId: (order as any).userId,
-      title,
-      message,
-      type: "order",
-      metadata: {
-        orderId: req.params.id,
-        status,
+    // Push notification ke array items
+    const userId = (order as any).userId;
+    await Notification.findOneAndUpdate(
+      { userId },
+      {
+        $push: {
+          items: {
+            title,
+            message,
+            type: "order",
+            isRead: false,
+            metadata: { orderId: req.params.id, status },
+            createdAt: new Date(),
+          },
+        },
+        $setOnInsert: { userId, userName: req.user?.name || "Admin" },
       },
-    });
+      { upsert: true }
+    );
 
     res.json({
       success: true,
@@ -235,13 +244,24 @@ export const verifyPayment = async (req: AuthRequest, res: Response) => {
         { new: true }
       );
 
-      await Notification.create({
-        userId: (order as any).userId,
-        title: "Pembayaran Diterima",
-        message: "Pembayaran Anda telah dikonfirmasi. Pesanan sedang diproses.",
-        type: "order",
-        metadata: { orderId: req.params.id, status: "paid" },
-      });
+      const acceptUserId = (order as any).userId;
+      await Notification.findOneAndUpdate(
+        { userId: acceptUserId },
+        {
+          $push: {
+            items: {
+              title: "Pembayaran Diterima",
+              message: "Pembayaran Anda telah dikonfirmasi. Pesanan sedang diproses.",
+              type: "order",
+              isRead: false,
+              metadata: { orderId: req.params.id, status: "paid" },
+              createdAt: new Date(),
+            },
+          },
+          $setOnInsert: { userId: acceptUserId, userName: req.user?.name || "Admin" },
+        },
+        { upsert: true }
+      );
 
       res.json({
         success: true,
@@ -261,13 +281,24 @@ export const verifyPayment = async (req: AuthRequest, res: Response) => {
         { new: true }
       );
 
-      await Notification.create({
-        userId: (order as any).userId,
-        title: "Pembayaran Ditolak",
-        message: `Pembayaran Anda ditolak. Alasan: ${reason}. Silakan upload ulang bukti pembayaran.`,
-        type: "order",
-        metadata: { orderId: req.params.id, status: "pending", rejectReason: reason },
-      });
+      const rejectUserId = (order as any).userId;
+      await Notification.findOneAndUpdate(
+        { userId: rejectUserId },
+        {
+          $push: {
+            items: {
+              title: "Pembayaran Ditolak",
+              message: `Pembayaran Anda ditolak. Alasan: ${reason}. Silakan upload ulang bukti pembayaran.`,
+              type: "order",
+              isRead: false,
+              metadata: { orderId: req.params.id, status: "pending", rejectReason: reason },
+              createdAt: new Date(),
+            },
+          },
+          $setOnInsert: { userId: rejectUserId, userName: req.user?.name || "Admin" },
+        },
+        { upsert: true }
+      );
 
       res.json({
         success: true,

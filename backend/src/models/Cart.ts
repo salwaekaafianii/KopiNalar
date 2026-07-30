@@ -20,6 +20,10 @@ const cartSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    userName: {
+      type: String,
+      default: "",
+    },
     items: [cartItemSchema],
   },
   { collection: "carts", timestamps: true }
