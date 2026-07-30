@@ -20,7 +20,6 @@ class ProfileAdminView extends GetView<AdminController> {
         automaticallyImplyLeading: false,
         title: Row(
           children: [
-            
             const SizedBox(width: 10),
             Text(
               'Profil Admin',
@@ -183,14 +182,21 @@ class ProfileAdminView extends GetView<AdminController> {
                                   child: OutlinedButton(
                                     onPressed: () => Get.back(),
                                     style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.white,
                                       side: BorderSide(
-                                        color: Colors.white.withOpacity(.2),
+                                        color: Colors.white.withOpacity(0.2),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
                                     child: Text(
                                       "Batal",
                                       style: GoogleFonts.poppins(
-                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ),
@@ -200,18 +206,26 @@ class ProfileAdminView extends GetView<AdminController> {
 
                                 Expanded(
                                   child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.redAccent,
-                                    ),
                                     onPressed: () async {
                                       Get.back();
                                       await authService.clearSession();
                                       Get.offAllNamed(Routes.login);
                                     },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.redAccent,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
                                     child: Text(
                                       "Keluar",
                                       style: GoogleFonts.poppins(
-                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ),

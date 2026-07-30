@@ -18,6 +18,7 @@ class OrdersView extends GetView<AdminController> {
         automaticallyImplyLeading: false,
         title: Row(
           children: [
+            const SizedBox(width: 10),
             Text(
               'Kelola Pesanan',
               style: GoogleFonts.poppins(
@@ -95,12 +96,12 @@ class OrdersView extends GetView<AdminController> {
   Widget _buildFilterChips() {
     final filters = [
       {'label': 'Semua', 'value': ''},
-      {'label': 'Pending', 'value': 'pending'},
-      {'label': 'Paid', 'value': 'paid'},
+      {'label': 'Menunggu', 'value': 'pending'},
+      {'label': 'Lunas', 'value': 'paid'},
       {'label': 'Diproses', 'value': 'processing'},
       {'label': 'Dikirim', 'value': 'shipped'},
       {'label': 'Selesai', 'value': 'delivered'},
-      {'label': 'Batal', 'value': 'cancelled'},
+      {'label': 'Dibatalkan', 'value': 'cancelled'},
     ];
 
     return Container(
@@ -246,10 +247,7 @@ class OrdersView extends GetView<AdminController> {
                 const SizedBox(height: 12),
                 const Divider(color: Colors.white10, height: 1),
                 const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: _buildStatusActions(context, orderId, status, paymentProof),
-                ),
+                _buildActionButtonsRow(context, orderId, status, paymentProof),
               ],
             ],
           ),
@@ -264,11 +262,11 @@ class OrdersView extends GetView<AdminController> {
     switch (status) {
       case 'pending':
         color = Colors.orangeAccent;
-        label = 'Pending';
+        label = 'Menunggu';
         break;
       case 'paid':
         color = Colors.blueAccent;
-        label = 'Paid';
+        label = 'Lunas';
         break;
       case 'processing':
         color = Colors.purpleAccent;
@@ -308,40 +306,17 @@ class OrdersView extends GetView<AdminController> {
     );
   }
 
-  List<Widget> _buildStatusActions(BuildContext context, String orderId, String currentStatus, String paymentProof) {
-    final actions = <Widget>[];
+  Widget _buildActionButtonsRow(BuildContext context, String orderId, String currentStatus, String paymentProof) {
+    // Kiri: tombol cancel/batal
+    // Kanan: tombol lanjutan (Konfirmasi Bayar, Proses, Kirim, Selesai)
 
-    // Jika pending & ada bukti bayar → tampilkan tombol verifikasi
-    if (currentStatus == 'pending' && paymentProof.isNotEmpty) {
-      actions.add(
-        Padding(
-          padding: const EdgeInsets.only(left: 8),
-          child: GestureDetector(
-            onTap: () => _showPaymentVerification(context, orderId, paymentProof),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.greenAccent.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.greenAccent.withOpacity(0.3)),
-              ),
-              child: Text(
-                'Verif Bayar',
-                style: GoogleFonts.poppins(
-                  color: Colors.greenAccent,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
+    // Tentukan status yang akan muncul
     final nextStatuses = <String>[];
-    if (currentStatus == 'pending' && paymentProof.isEmpty) {
-      // Tanpa bukti bayar, bisa langsung paid atau cancel
+    bool showVerifBayar = false;
+
+    if (currentStatus == 'pending' && paymentProof.isNotEmpty) {
+      showVerifBayar = true;
+    } else if (currentStatus == 'pending' && paymentProof.isEmpty) {
       nextStatuses.addAll(['paid', 'cancelled']);
     } else if (currentStatus == 'paid') {
       nextStatuses.addAll(['processing', 'cancelled']);
@@ -351,62 +326,97 @@ class OrdersView extends GetView<AdminController> {
       nextStatuses.add('delivered');
     }
 
-    for (final status in nextStatuses) {
-      String label;
-      Color color;
-      switch (status) {
-        case 'paid':
-          label = 'Konfirmasi Bayar';
-          color = Colors.blueAccent;
-          break;
-        case 'processing':
-          label = 'Proses';
-          color = Colors.purpleAccent;
-          break;
-        case 'shipped':
-          label = 'Kirim';
-          color = Colors.cyanAccent;
-          break;
-        case 'delivered':
-          label = 'Selesai';
-          color = Colors.greenAccent;
-          break;
-        case 'cancelled':
-          label = 'Batalkan';
-          color = Colors.redAccent;
-          break;
-        default:
-          label = status;
-          color = Colors.grey;
-      }
+    // Pisahkan cancel dari status forward (progress)
+    final cancelStatuses = nextStatuses.where((s) => s == 'cancelled').toList();
+    final forwardStatuses = nextStatuses.where((s) => s != 'cancelled').toList();
 
-      actions.add(
-        Padding(
-          padding: const EdgeInsets.only(left: 8),
-          child: GestureDetector(
-            onTap: () => controller.updateOrderStatus(orderId, status),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: color.withOpacity(0.3)),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Left side: cancel buttons
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            if (showVerifBayar)
+              _buildActionChip(
+                label: 'Verif Bayar',
+                color: Colors.greenAccent,
+                onTap: () => _showPaymentVerification(context, orderId, paymentProof),
               ),
-              child: Text(
-                label,
-                style: GoogleFonts.poppins(
-                  color: color,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+            ...cancelStatuses.map((status) {
+              return _buildActionChip(
+                label: 'Batalkan',
+                color: Colors.redAccent,
+                onTap: () => controller.updateOrderStatus(orderId, status),
+              );
+            }),
+          ],
+        ),
+
+        // Right side: forward/progress buttons
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: forwardStatuses.map((status) {
+            String label;
+            Color color;
+            switch (status) {
+              case 'paid':
+                label = 'Konfirmasi Bayar';
+                color = Colors.blueAccent;
+                break;
+              case 'processing':
+                label = 'Proses';
+                color = Colors.purpleAccent;
+                break;
+              case 'shipped':
+                label = 'Kirim';
+                color = Colors.cyanAccent;
+                break;
+              case 'delivered':
+                label = 'Selesai';
+                color = Colors.greenAccent;
+                break;
+              default:
+                label = status;
+                color = Colors.grey;
+            }
+            return _buildActionChip(
+              label: label,
+              color: color,
+              onTap: () => controller.updateOrderStatus(orderId, status),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionChip({
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.poppins(
+            color: color,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
           ),
         ),
-      );
-    }
-
-    return actions;
+      ),
+    );
   }
 
   void _showOrderDetail(BuildContext context, Map<String, dynamic> order) {
@@ -416,163 +426,164 @@ class OrdersView extends GetView<AdminController> {
   void _showPaymentVerification(BuildContext context, String orderId, String paymentProofUrl) {
     Get.bottomSheet(
       Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
         decoration: const BoxDecoration(
           color: Color(0xFF1A1A1A),
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Verifikasi Pembayaran',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => Get.back(),
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
-                      shape: BoxShape.circle,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Verifikasi Pembayaran',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
-                    child: const Icon(Icons.close_rounded, color: Colors.white54, size: 20),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
+                  GestureDetector(
+                    onTap: () => Get.back(),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.close_rounded, color: Colors.white54, size: 20),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
 
-            // Payment proof image
-            Center(
-              child: GestureDetector(
-                onTap: () => _showFullImage(context, paymentProofUrl),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    paymentProofUrl,
-                    width: double.infinity,
-                    height: 200,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
+              // Payment proof image
+              Center(
+                child: GestureDetector(
+                  onTap: () => _showFullImage(context, paymentProofUrl),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      _cacheBust(paymentProofUrl),
+                      width: double.infinity,
                       height: 200,
-                      color: Colors.white.withOpacity(0.05),
-                      child: const Center(
-                        child: Icon(Icons.image_not_supported_rounded,
-                            color: Colors.white24, size: 40),
-                      ),
-                    ),
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
                         height: 200,
-                        color: Colors.white.withOpacity(0.03),
+                        color: Colors.white.withOpacity(0.05),
                         child: const Center(
-                          child: CircularProgressIndicator(color: Colors.white24),
+                          child: Icon(Icons.image_not_supported_rounded,
+                              color: Colors.white24, size: 40),
                         ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Center(
-              child: Text(
-                'Tap untuk lihat fullscreen',
-                style: GoogleFonts.poppins(
-                  color: Colors.white38,
-                  fontSize: 11,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      Get.back();
-                      controller.verifyPayment(orderId, 'reject', rejectReason: 'Bukti tidak jelas');
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.redAccent.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
                       ),
-                      child: Center(
-                        child: Text(
-                          'Tolak',
-                          style: GoogleFonts.poppins(
-                            color: Colors.redAccent,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          height: 200,
+                          color: Colors.white.withOpacity(0.03),
+                          child: const Center(
+                            child: CircularProgressIndicator(color: Colors.white24),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      Get.back();
-                      controller.verifyPayment(orderId, 'accept');
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.greenAccent.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.greenAccent.withOpacity(0.3)),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Terima',
-                          style: GoogleFonts.poppins(
-                            color: Colors.greenAccent,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: () {
-                Get.back();
-                _showRejectReasonDialog(context, orderId);
-              },
-              child: Center(
+              ),
+              const SizedBox(height: 8),
+              Center(
                 child: Text(
-                  'Tolak dengan alasan...',
+                  'Tap untuk lihat fullscreen',
                   style: GoogleFonts.poppins(
-                    color: Colors.white54,
-                    fontSize: 12,
-                    decoration: TextDecoration.underline,
+                    color: Colors.white38,
+                    fontSize: 11,
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-          ],
+              const SizedBox(height: 20),
+
+              // Tombol Tolak & Terima sejajar
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Get.back();
+                        controller.verifyPayment(orderId, 'reject', rejectReason: 'Bukti tidak jelas');
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Tolak',
+                            style: GoogleFonts.poppins(
+                              color: Colors.redAccent,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Get.back();
+                        controller.verifyPayment(orderId, 'accept');
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.greenAccent.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.greenAccent.withOpacity(0.3)),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Terima',
+                            style: GoogleFonts.poppins(
+                              color: Colors.greenAccent,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: () {
+                  Get.back();
+                  _showRejectReasonDialog(context, orderId);
+                },
+                child: Center(
+                  child: Text(
+                    'Tolak dengan alasan...',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white54,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );
@@ -590,7 +601,7 @@ class OrdersView extends GetView<AdminController> {
                 child: Center(
                   child: InteractiveViewer(
                     child: Image.network(
-                      imageUrl,
+                      _cacheBust(imageUrl),
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) => const Icon(
                         Icons.broken_image_rounded,
@@ -702,11 +713,22 @@ class OrdersView extends GetView<AdminController> {
   String _formatDate(String dateStr) {
     try {
       final date = DateTime.parse(dateStr);
+      // Konversi UTC ke WIB (+7 jam)
+      final wibDate = date.add(const Duration(hours: 7));
       final formatter = DateFormat('dd/MM HH:mm', 'id_ID');
-      return formatter.format(date);
+      return '${formatter.format(wibDate)} WIB';
     } catch (e) {
       return dateStr;
     }
+  }
+
+  /// Helper untuk cache-busting: tambah query param timestamp
+  String _cacheBust(String url) {
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    if (url.contains('?')) {
+      return '$url&t=$ts';
+    }
+    return '$url?t=$ts';
   }
 }
 

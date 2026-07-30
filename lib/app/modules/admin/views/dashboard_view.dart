@@ -86,6 +86,41 @@ class DashboardView extends GetView<AdminController> {
                               fontSize: 12,
                             ),
                           ),
+                          const SizedBox(height: 8),
+                          StreamBuilder(
+                            stream: Stream.periodic(
+                              const Duration(seconds: 1),
+                              (_) => DateTime.now(),
+                            ),
+                            builder: (context, snapshot) {
+                              final now = snapshot.data ?? DateTime.now();
+                              final dateFormatted = DateFormat(
+                                'EEEE, dd MMMM yyyy',
+                                'id_ID',
+                              ).format(now);
+                              final timeFormatted = DateFormat(
+                                'HH:mm:ss',
+                              ).format(now);
+                              return Row(
+                                children: [
+                                  Icon(
+                                    Icons.access_time_rounded,
+                                    color: const Color(0xFFFFB74D),
+                                    size: 14,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '$dateFormatted • $timeFormatted',
+                                    style: GoogleFonts.poppins(
+                                      color: const Color(0xFFFFB74D).withOpacity(0.8),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -130,14 +165,6 @@ class DashboardView extends GetView<AdminController> {
                           label: 'Total Pesanan',
                           value: '${controller.totalOrders}',
                           color: const Color(0xFFFFB74D),
-                        ),
-                        _buildStatCard(
-                          icon: Icons.monetization_on_rounded,
-                          label: 'Pendapatan',
-                          value: controller.formatRupiah(
-                            controller.totalRevenue.value,
-                          ),
-                          color: const Color(0xFF4CAF50),
                         ),
                         _buildStatCard(
                           icon: Icons.pending_actions_rounded,
@@ -385,11 +412,11 @@ class DashboardView extends GetView<AdminController> {
     switch (status) {
       case 'pending':
         color = Colors.orangeAccent;
-        label = 'Pending';
+        label = 'Menunggu';
         break;
       case 'paid':
         color = Colors.blueAccent;
-        label = 'Paid';
+        label = 'Lunas';
         break;
       case 'processing':
         color = Colors.purpleAccent;
@@ -433,8 +460,10 @@ class DashboardView extends GetView<AdminController> {
   String _formatDate(String dateStr) {
     try {
       final date = DateTime.parse(dateStr);
+      // Konversi UTC ke WIB (+7 jam)
+      final wibDate = date.add(const Duration(hours: 7));
       final formatter = DateFormat('dd/MM HH:mm', 'id_ID');
-      return formatter.format(date);
+      return '${formatter.format(wibDate)} WIB';
     } catch (e) {
       return dateStr;
     }

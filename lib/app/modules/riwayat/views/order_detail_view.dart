@@ -86,7 +86,7 @@ class OrderDetailView extends GetView {
         }
 
         // Ubah ke zona waktu WIB (UTC+7) secara eksplisit
-        final wibDate = parsedDate.add(Duration(hours: 7));
+        final wibDate = parsedDate.add(const Duration(hours: 7));
 
         return '${DateFormat('dd MMM yyyy, HH:mm', 'en_US').format(wibDate)} WIB';
       } catch (e) {
@@ -106,11 +106,41 @@ class OrderDetailView extends GetView {
     }
 
     String statusLabel(String? status) {
-      return 'Selesai';
+      switch (status) {
+        case 'pending':
+          return 'Menunggu Verifikasi';
+        case 'paid':
+          return 'Lunas';
+        case 'processing':
+          return 'Diproses';
+        case 'shipped':
+          return 'Dikirim';
+        case 'delivered':
+          return 'Selesai';
+        case 'cancelled':
+          return 'Dibatalkan';
+        default:
+          return 'Selesai';
+      }
     }
 
     Color statusColor(String? status) {
-      return Colors.green;
+      switch (status) {
+        case 'pending':
+          return Colors.orangeAccent;
+        case 'paid':
+          return Colors.blueAccent;
+        case 'processing':
+          return Colors.purpleAccent;
+        case 'shipped':
+          return Colors.cyanAccent;
+        case 'delivered':
+          return Colors.greenAccent;
+        case 'cancelled':
+          return Colors.redAccent;
+        default:
+          return Colors.green;
+      }
     }
 
     return Scaffold(

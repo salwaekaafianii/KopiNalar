@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -149,7 +148,6 @@ class ProductsView extends GetView<AdminController> {
     final price = (product['price'] ?? 0).toDouble();
     final image = product['image']?.toString() ?? '';
     final description = product['description']?.toString() ?? '';
-    final rating = (product['rating'] ?? 0).toDouble();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -230,37 +228,18 @@ class ProductsView extends GetView<AdminController> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.star_rounded,
-                        color: const Color(0xFFFFB74D),
-                        size: 14,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        rating.toString(),
-                        style: GoogleFonts.poppins(
-                          color: Colors.white54,
-                          fontSize: 11,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        controller.formatRupiah(price),
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    controller.formatRupiah(price),
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
             ),
 
-            // Actions
             // Actions
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -321,6 +300,7 @@ class ProductsView extends GetView<AdminController> {
     final categoryController = TextEditingController();
     final priceController = TextEditingController();
     final descriptionController = TextEditingController();
+    final ratingController = TextEditingController();
     var selectedImagePath = ''.obs;
     var selectedImageBytes = Rx<Uint8List?>(null);
 
@@ -355,6 +335,13 @@ class ProductsView extends GetView<AdminController> {
                 priceController,
                 'Harga',
                 hint: 'Contoh: 25000',
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 12),
+              _buildDialogTextField(
+                ratingController,
+                'Rating',
+                hint: 'Contoh: 4.5',
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 12),
@@ -423,6 +410,7 @@ class ProductsView extends GetView<AdminController> {
               final category = categoryController.text.trim();
               final price = double.tryParse(priceController.text.trim()) ?? 0;
               final description = descriptionController.text.trim();
+              final rating = double.tryParse(ratingController.text.trim()) ?? 0;
 
               if (name.isEmpty ||
                   category.isEmpty ||
@@ -453,6 +441,7 @@ class ProductsView extends GetView<AdminController> {
                 name: name,
                 category: category,
                 price: price,
+                rating: rating,
                 description: description,
                 image: imageUrl,
               );
@@ -487,6 +476,9 @@ class ProductsView extends GetView<AdminController> {
     final descriptionController = TextEditingController(
       text: product['description']?.toString() ?? '',
     );
+    final ratingController = TextEditingController(
+      text: (product['rating'] ?? 0).toString(),
+    );
     var selectedImageBytes = Rx<Uint8List?>(null);
     var selectedImagePath = ''.obs;
     final currentImage = product['image']?.toString() ?? '';
@@ -513,6 +505,12 @@ class ProductsView extends GetView<AdminController> {
               _buildDialogTextField(
                 priceController,
                 'Harga',
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 12),
+              _buildDialogTextField(
+                ratingController,
+                'Rating',
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 12),
@@ -607,6 +605,7 @@ class ProductsView extends GetView<AdminController> {
                 category: categoryController.text.trim(),
                 price: double.tryParse(priceController.text.trim()),
                 description: descriptionController.text.trim(),
+                rating: double.tryParse(ratingController.text.trim()),
                 image: imageUrl,
               );
             },

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../data/services/api_service.dart';
 import '../../../data/services/auth_service.dart';
+import '../../../theme/snackbar_helper.dart';
 
 class AdminController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
@@ -162,21 +163,9 @@ class AdminController extends GetxController {
     try {
       await _apiService.updateOrderStatus(orderId, newStatus);
       await loadDashboard();
-      Get.snackbar(
-        'Berhasil',
-        'Status pesanan berhasil diperbarui',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: const Color(0xFF1A1A1A),
-        colorText: const Color(0xFFFFB74D),
-      );
+      showCustomSnackbar('Berhasil', 'Status pesanan berhasil diperbarui');
     } catch (e) {
-      Get.snackbar(
-        'Gagal',
-        e.toString().replaceFirst('Exception: ', ''),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: const Color(0xFF1A1A1A),
-        colorText: Colors.redAccent,
-      );
+      showCustomSnackbar('Gagal', e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -184,21 +173,9 @@ class AdminController extends GetxController {
     try {
       await _apiService.verifyPayment(orderId, action, rejectReason: rejectReason);
       await loadDashboard();
-      Get.snackbar(
-        'Berhasil',
-        action == 'accept' ? 'Pembayaran diterima' : 'Pembayaran ditolak',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: const Color(0xFF1A1A1A),
-        colorText: const Color(0xFFFFB74D),
-      );
+      showCustomSnackbar('Berhasil', action == 'accept' ? 'Pembayaran diterima' : 'Pembayaran ditolak');
     } catch (e) {
-      Get.snackbar(
-        'Gagal',
-        e.toString().replaceFirst('Exception: ', ''),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: const Color(0xFF1A1A1A),
-        colorText: Colors.redAccent,
-      );
+      showCustomSnackbar('Gagal', e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -208,6 +185,7 @@ class AdminController extends GetxController {
     required String category,
     required double price,
     required String description,
+    double rating = 0,
     String image = '',
   }) async {
     try {
@@ -215,26 +193,15 @@ class AdminController extends GetxController {
         name: name,
         category: category,
         price: price,
+        rating: rating,
         description: description,
         image: image,
       );
       await loadProducts();
       Get.back();
-      Get.snackbar(
-        'Berhasil',
-        'Produk berhasil ditambahkan',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: const Color(0xFF1A1A1A),
-        colorText: const Color(0xFFFFB74D),
-      );
+      showCustomSnackbar('Berhasil', 'Produk berhasil ditambahkan');
     } catch (e) {
-      Get.snackbar(
-        'Gagal',
-        e.toString().replaceFirst('Exception: ', ''),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: const Color(0xFF1A1A1A),
-        colorText: Colors.redAccent,
-      );
+      showCustomSnackbar('Gagal', e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -243,6 +210,7 @@ class AdminController extends GetxController {
     String? category,
     double? price,
     String? description,
+    double? rating,
     String? image,
   }) async {
     try {
@@ -251,25 +219,14 @@ class AdminController extends GetxController {
         category: category,
         price: price,
         description: description,
+        rating: rating,
         image: image,
       );
       await loadProducts();
       Get.back();
-      Get.snackbar(
-        'Berhasil',
-        'Produk berhasil diperbarui',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: const Color(0xFF1A1A1A),
-        colorText: const Color(0xFFFFB74D),
-      );
+      showCustomSnackbar('Berhasil', 'Produk berhasil diperbarui');
     } catch (e) {
-      Get.snackbar(
-        'Gagal',
-        e.toString().replaceFirst('Exception: ', ''),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: const Color(0xFF1A1A1A),
-        colorText: Colors.redAccent,
-      );
+      showCustomSnackbar('Gagal', e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -277,21 +234,9 @@ class AdminController extends GetxController {
     try {
       await _apiService.deleteProduct(id);
       await loadProducts();
-      Get.snackbar(
-        'Berhasil',
-        'Produk berhasil dihapus',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: const Color(0xFF1A1A1A),
-        colorText: const Color(0xFFFFB74D),
-      );
+      showCustomSnackbar('Berhasil', 'Produk berhasil dihapus');
     } catch (e) {
-      Get.snackbar(
-        'Gagal',
-        e.toString().replaceFirst('Exception: ', ''),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: const Color(0xFF1A1A1A),
-        colorText: Colors.redAccent,
-      );
+      showCustomSnackbar('Gagal', e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -304,4 +249,3 @@ class AdminController extends GetxController {
     return formatter.format(amount);
   }
 }
-

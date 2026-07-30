@@ -162,40 +162,7 @@ class LoginView extends GetView<LoginController> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-
-                      // Tombol Google
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          style: kOutlineButton(),
-                          onPressed: () {
-                            controller.loginWithGoogle();
-                          },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/images/google.png',
-                                width: 22,
-                                height: 22,
-                                fit: BoxFit.contain,
-                              ),
-                              const SizedBox(width: 8),
-                              Flexible(
-                                child: Text(
-                                  'Masuk dengan Google',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: kButtonText(color: Colors.white),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
                       const SizedBox(height: 24),
-
                       // Opsi Daftar
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,

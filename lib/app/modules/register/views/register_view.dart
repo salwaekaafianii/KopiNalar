@@ -277,43 +277,6 @@ class RegisterView extends GetView<RegisterController> {
                     ),
                   ),
 
-                  const SizedBox(height: 16),
-
-                  // =========================
-                  // GOOGLE
-                  // =========================
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      style: kOutlineButton(),
-                      onPressed: () {
-                        controller.registerWithGoogle();
-                      },
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/images/google.png',
-                            width: 22,
-                            height: 22,
-                            fit: BoxFit.contain,
-                          ),
-
-                          const SizedBox(width: 8),
-
-                          Flexible(
-                            child: Text(
-                              'Daftar dengan Google',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: kButtonText(color: Colors.white),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
                   const SizedBox(height: 24),
 
                   // =========================

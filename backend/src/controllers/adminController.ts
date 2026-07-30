@@ -268,13 +268,14 @@ export const verifyPayment = async (req: AuthRequest, res: Response) => {
         message: "Pembayaran berhasil diterima",
       });
     } else {
-      // Tolak pembayaran → set paymentStatus ke "rejected", status tetap pending
+      // Tolak pembayaran → set status ke "cancelled"
       const reason = rejectReason || "Bukti pembayaran tidak valid";
 
       await Order.findOneAndUpdate(
         { "items._id": req.params.id },
         {
           $set: {
+            "items.$.status": "cancelled",
             "items.$.paymentStatus": "rejected",
           },
         },
@@ -287,11 +288,11 @@ export const verifyPayment = async (req: AuthRequest, res: Response) => {
         {
           $push: {
             items: {
-              title: "Pembayaran Ditolak",
-              message: `Pembayaran Anda ditolak. Alasan: ${reason}. Silakan upload ulang bukti pembayaran.`,
+              title: "Pesanan Dibatalkan",
+              message: `Pembayaran Anda ditolak. Alasan: ${reason}.`,
               type: "order",
               isRead: false,
-              metadata: { orderId: req.params.id, status: "pending", rejectReason: reason },
+              metadata: { orderId: req.params.id, status: "cancelled", rejectReason: reason },
               createdAt: new Date(),
             },
           },

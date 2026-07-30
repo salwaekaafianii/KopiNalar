@@ -128,7 +128,7 @@ class OrderDetailView extends GetView<AdminController> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Image.network(
-                          paymentProof,
+                          _cacheBust(paymentProof),
                           width: double.infinity,
                           height: 220,
                           fit: BoxFit.cover,
@@ -173,66 +173,14 @@ class OrderDetailView extends GetView<AdminController> {
                   ),
                   if (status == 'pending') ...[
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              controller.verifyPayment(
-                                orderId,
-                                'reject',
-                                rejectReason: 'Bukti tidak valid',
-                              );
-                              Get.back();
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              decoration: BoxDecoration(
-                                color: Colors.redAccent.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                    color: Colors.redAccent.withOpacity(0.3)),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'Tolak',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.redAccent,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
+                    Center(
+                      child: Text(
+                        'Verifikasi pembayaran melalui daftar pesanan',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white38,
+                          fontSize: 12,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              controller.verifyPayment(orderId, 'accept');
-                              Get.back();
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              decoration: BoxDecoration(
-                                color: Colors.greenAccent.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                    color: Colors.greenAccent.withOpacity(0.3)),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'Terima',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.greenAccent,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ],
@@ -253,7 +201,7 @@ class OrderDetailView extends GetView<AdminController> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                          item['image']?.toString() ?? '',
+                          _cacheBust(item['image']?.toString() ?? ''),
                           width: 50,
                           height: 50,
                           fit: BoxFit.cover,
@@ -439,7 +387,7 @@ class OrderDetailView extends GetView<AdminController> {
                 child: Center(
                   child: InteractiveViewer(
                     child: Image.network(
-                      imageUrl,
+                      _cacheBust(imageUrl),
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) => const Icon(
                         Icons.broken_image_rounded,
@@ -481,11 +429,22 @@ class OrderDetailView extends GetView<AdminController> {
   String _formatDate(String dateStr) {
     try {
       final date = DateTime.parse(dateStr);
+      // Konversi UTC ke WIB (+7 jam)
+      final wibDate = date.add(const Duration(hours: 7));
       final formatter = DateFormat('dd MMM yyyy HH:mm', 'id_ID');
-      return formatter.format(date);
+      return '${formatter.format(wibDate)} WIB';
     } catch (e) {
       return dateStr;
     }
+  }
+
+  /// Helper untuk cache-busting: tambah query param timestamp
+  String _cacheBust(String url) {
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    if (url.contains('?')) {
+      return '$url&t=$ts';
+    }
+    return '$url?t=$ts';
   }
 }
 
