@@ -49,8 +49,7 @@ class HomeView extends GetView<HomeController> {
                   Obx(() {
                     return IconButton(
                       onPressed: () async {
-                        await Get.toNamed('/notifikasi');
-                        controller.loadUnreadNotificationCount();
+                        controller.goToNotifications();
                       },
                       style: IconButton.styleFrom(
                         backgroundColor: Colors.white.withOpacity(0.05),

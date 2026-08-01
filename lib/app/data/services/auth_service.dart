@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
+import '../../theme/snackbar_helper.dart';
 
 class AuthService {
   static const _tokenKey = 'auth_token';
@@ -15,6 +16,21 @@ class AuthService {
   Future<void> init() async {
     final loggedIn = await _isLoggedIn();
     isGuest.value = !loggedIn;
+  }
+
+  /// Cek apakah user adalah tamu.
+  /// Jika tamu: tampilkan snackbar, arahkan ke halaman login, return true (diblokir).
+  /// Jika sudah login: return false (boleh lanjut).
+  bool requireLogin(String featureLabel) {
+    if (isGuest.value) {
+      showCustomSnackbar(
+        'Perlu Login',
+        'Silakan masuk terlebih dahulu untuk mengakses $featureLabel',
+      );
+      Get.toNamed('/login');
+      return true;
+    }
+    return false;
   }
 
   /// Menyimpan token dan data user setelah login/register

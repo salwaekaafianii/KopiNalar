@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:kopi_bnsp/app/data/models/cart_model.dart';
 import 'package:kopi_bnsp/app/data/services/api_service.dart';
+import 'package:kopi_bnsp/app/data/services/auth_service.dart';
 import 'package:kopi_bnsp/app/theme/snackbar_helper.dart';
 
 class CartController extends GetxController {
@@ -117,6 +118,11 @@ class CartController extends GetxController {
   }
 
   void addItem(Map<String, String> product) {
+    // Blokir tamu: harus login dulu sebelum menambah ke keranjang
+    if (Get.find<AuthService>().requireLogin('keranjang')) {
+      return;
+    }
+
     final priceString =
         product['price']?.replaceAll(RegExp(r'[^0-9]'), '') ?? '0';
     final price = int.tryParse(priceString) ?? 0;

@@ -91,6 +91,11 @@ class FavoriteController extends GetxController {
 
   /// Toggle favorite (async)
   Future<void> toggleFavorite(Map<String, dynamic> product) async {
+    // Blokir tamu: harus login dulu sebelum menambah/menghapus favorit
+    if (_authService.requireLogin('favorit')) {
+      return;
+    }
+
     if (isFavorite(product)) {
       await removeFavorite(product);
     } else {

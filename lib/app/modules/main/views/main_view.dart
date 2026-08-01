@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kopi_bnsp/app/data/services/auth_service.dart';
 import 'package:kopi_bnsp/app/modules/cart/controllers/cart_controller.dart';
 import 'package:kopi_bnsp/app/modules/riwayat/views/riwayat_view.dart';
 import 'package:kopi_bnsp/app/modules/cart/views/cart_view.dart';
@@ -77,12 +78,23 @@ class MainView extends GetView<MainController> {
                         'Profil',
                       ];
 
-                      // Badge untuk tab Keranjang (index 2)
+                      // Badge untuk tab Keranjang (index 2) — hanya untuk user login
                       final cartTotal = cartController.totalCartItems;
-                      final showBadge = index == 2 && cartTotal > 0;
+                      final isGuest = Get.find<AuthService>().isGuest.value;
+                      final showBadge =
+                          index == 2 && cartTotal > 0 && !isGuest;
 
                       return GestureDetector(
-                        onTap: () => controller.changeIndex(index),
+                        onTap: () {
+                          // Blokir tamu dari tab Keranjang & Pesanan
+                          if (isGuest && (index == 2 || index == 3)) {
+                            Get.find<AuthService>().requireLogin(
+                              index == 2 ? 'keranjang' : 'riwayat pesanan',
+                            );
+                            return;
+                          }
+                          controller.changeIndex(index);
+                        },
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(

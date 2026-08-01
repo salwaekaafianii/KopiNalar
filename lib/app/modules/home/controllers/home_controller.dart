@@ -145,6 +145,16 @@ class HomeController extends GetxController {
     Get.toNamed('/cart');
   }
 
+  // Fungsi saat ikon notifikasi diklik
+  void goToNotifications() {
+    // Blokir tamu: harus login dulu sebelum mengakses notifikasi
+    if (authService.requireLogin('notifikasi')) {
+      return;
+    }
+
+    Get.toNamed('/notifikasi');
+  }
+
   void goToDetail(Map<String, String> product) {
     Get.toNamed('/product-detail', arguments: product);
   }

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../cart/controllers/cart_controller.dart';
 import '../../favorit/controllers/favorit_controller.dart';
+import '../../../data/services/auth_service.dart';
 import '../../../theme/snackbar_helper.dart';
 
 class ProductDetailController extends GetxController {
@@ -119,6 +120,11 @@ class ProductDetailController extends GetxController {
   // =========================
 
   void buyNow() {
+    // Blokir tamu: harus login dulu sebelum membeli
+    if (Get.find<AuthService>().requireLogin('pembelian')) {
+      return;
+    }
+
     Get.toNamed(
       '/checkout',
       arguments: {
@@ -151,6 +157,11 @@ class ProductDetailController extends GetxController {
   // =========================
 
   void toggleFavorite() {
+    // Blokir tamu: harus login dulu sebelum menambah favorit
+    if (Get.find<AuthService>().requireLogin('favorit')) {
+      return;
+    }
+
     isFavorite.value = !isFavorite.value;
     final favCtrl = Get.find<FavoriteController>();
     favCtrl.toggleFavorite(productAsMap);
@@ -167,6 +178,11 @@ class ProductDetailController extends GetxController {
   // =========================
 
   void addToCart() {
+    // Blokir tamu: harus login dulu sebelum menambah ke keranjang
+    if (Get.find<AuthService>().requireLogin('keranjang')) {
+      return;
+    }
+
     final cartController = Get.find<CartController>();
 
     cartController.addItem(productAsMap);
